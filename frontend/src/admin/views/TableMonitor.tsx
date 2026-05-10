@@ -31,16 +31,23 @@ export function TableMonitor() {
       return {
         id: t.id,
         number: (t as { number?: number }).number ?? t.id,
-        hall: ((t as { hall?: 1 | 2 }).hall ?? (t.id <= 21 ? 1 : 2)) as 1 | 2,
-        zone: t.zone,
-        seats: t.seats,
-        status: t.status,
+        hall:
+          (rt?.hall ??
+            (t as { hall?: 1 | 2 | 3 }).hall ??
+            (((t as { number?: number }).number ?? t.id) <= 7
+              ? 1
+              : ((t as { number?: number }).number ?? t.id) <= 21
+                ? 2
+                : 3)) as 1 | 2 | 3,
+        zone: rt?.zone ?? t.zone,
+        seats: rt?.seats ?? t.seats,
+        status: rt?.status ?? t.status,
         x: rt?.x ?? t.x,
         y: rt?.y ?? t.y,
         width: rt?.width ?? t.width ?? 70,
         height: rt?.height ?? t.height ?? 60,
         shape: (rt?.shape ?? t.shape ?? 'rect') as 'rect' | 'round',
-        scene: t.scene,
+        scene: rt?.scene ?? t.scene,
       }
     })
   }, [tables])
@@ -112,7 +119,7 @@ export function TableMonitor() {
               <div style={{ marginTop: 18, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div>
                   <div className="admin-stat-label">Стол</div>
-                  <strong>№{selected.number} ({selected.hall === 1 ? 'Зал 1' : 'Зал 2'})</strong>
+                  <strong>№{selected.number} ({selected.hall === 1 ? 'Зал 1' : selected.hall === 2 ? 'Зал 2' : 'Зал 3'})</strong>
                 </div>
                 <div>
                   <div className="admin-stat-label">Мест</div>

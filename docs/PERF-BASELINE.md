@@ -81,3 +81,9 @@ npx lighthouse http://localhost:5173 --form-factor=mobile --preset=desktop
 - Added FPS-adaptive ember density, AVIF-first hero poster fallback, long-task RUM telemetry, API `Server-Timing`, and low-tier/touch header hover-lightening.
 - `perf:budgets`: OK (`largest js.gz = 100.58 KB`, `largest css.gz = 13.71 KB`).
 - Verification sequence repeated: `guard:mojibake` -> `lint` (same 3 known admin warnings) -> `build` -> `perf:budgets` -> `node --check backend/src/index.js`.
+## UPDATE 2026-05-10 (pass 7 — booking 3 halls + media refresh)
+
+- Booking map upgraded to 3 halls with new map assets and updated table hit-zones.
+- New table photos added and optimized (`webp/avif` + mobile `-sm` derivatives).
+- `perf:budgets`: OK (`largest js.gz = 100.68 KB`, `largest css.gz = 13.71 KB`).
+- Verification sequence repeated: `guard:mojibake` -> `lint` (same 3 known admin warnings) -> `build` -> `perf:budgets` -> `node --check backend/src/index.js`.

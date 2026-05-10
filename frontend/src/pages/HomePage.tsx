@@ -634,16 +634,23 @@ export function HomePage() {
       return {
         id: t.id,
         number: (t as { number?: number }).number ?? t.id,
-        hall: ((t as { hall?: 1 | 2 }).hall ?? (t.id <= 21 ? 1 : 2)) as 1 | 2,
-        zone: t.zone,
-        seats: t.seats,
-        status: t.status,
+        hall:
+          (rt?.hall ??
+            (t as { hall?: 1 | 2 | 3 }).hall ??
+            (((t as { number?: number }).number ?? t.id) <= 7
+              ? 1
+              : ((t as { number?: number }).number ?? t.id) <= 21
+                ? 2
+                : 3)) as 1 | 2 | 3,
+        zone: rt?.zone ?? t.zone,
+        seats: rt?.seats ?? t.seats,
+        status: rt?.status ?? t.status,
         x: rt?.x ?? t.x,
         y: rt?.y ?? t.y,
         width: rt?.width ?? t.width ?? 70,
         height: rt?.height ?? t.height ?? 60,
         shape: (rt?.shape ?? t.shape ?? 'rect') as 'rect' | 'round',
-        scene: t.scene,
+        scene: rt?.scene ?? t.scene,
       }
     })
   }, [tables])
@@ -1209,13 +1216,18 @@ export function HomePage() {
                     preloadBookingChunks()
                     const matched = (tables as Table[]).find((x) => x.id === t.id)
                     if (!matched) return
-                    chooseTable(matched)
+                    chooseTable({
+                      ...matched,
+                      seats: t.seats,
+                      hall: t.hall,
+                      number: t.number,
+                    } as Table)
                     setBookingState('idle')
                     setBookingOpen(true)
                     trackEvent('booking_dialog_open', {
                       table_id: matched.id,
                       table_number: matched.number,
-                      hall: matched.hall,
+                      hall: t.hall,
                     })
                   }}
                 />

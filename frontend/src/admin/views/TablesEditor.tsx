@@ -221,9 +221,10 @@ export function TablesEditor() {
                 <div className="field-grid">
                   <div className="field-row">
                     <label>Зал</label>
-                    <select className="select" value={selected.hall ?? 1} onChange={(e) => updateSelected({ hall: Number(e.target.value) as 1 | 2 })}>
+                    <select className="select" value={selected.hall ?? 1} onChange={(e) => updateSelected({ hall: Number(e.target.value) as 1 | 2 | 3 })}>
                       <option value={1}>Зал 1</option>
                       <option value={2}>Зал 2</option>
+                      <option value={3}>Зал 3</option>
                     </select>
                   </div>
                   <div className="field-row">

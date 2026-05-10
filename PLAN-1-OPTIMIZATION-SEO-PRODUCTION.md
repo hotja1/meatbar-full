@@ -513,3 +513,9 @@
 - [x] Added frontend RUM long-task telemetry (`PerformanceObserver: longtask`) to track main-thread stalls beyond standard Web Vitals.
 - [x] Added backend `Server-Timing` headers for `/api/menu`, `/api/tables`, `/api/content` including cache hit/miss marker.
 - [x] Header nav hover-fire effects are now auto-lightened on touch/coarse pointers and `perf-tier=low` devices to reduce unnecessary GPU overhead.
+## UPDATE 2026-05-10 (pass 7 — booking map stability)
+
+- Completed full booking-map migration to 3 halls with deterministic hall routing by table number.
+- Added optimized image pipeline for new table photos (`webp` + `avif` + `-sm` mobile variants).
+- Verification sequence passed: `guard:mojibake` -> `lint` (3 known admin warnings) -> `build` -> `perf:budgets`.
+- Budget gate status: OK (`largest js.gz = 100.68 KB`, `largest css.gz = 13.71 KB`).

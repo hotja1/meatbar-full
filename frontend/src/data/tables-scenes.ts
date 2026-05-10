@@ -9,16 +9,6 @@ export type TableSceneMedia = {
 const ASSETS = '/assets/tables'
 
 function media(slug: string): TableSceneMedia {
-  if (slug === 'hall-1-layout-png') {
-    const src = `${ASSETS}/hall-1-layout.png`
-    return { slug, imageWebp: src, imageWebpSm: src, imageAvif: src, imageAvifSm: src }
-  }
-
-  if (slug === 'hall-2-lounge-layout-png') {
-    const src = `${ASSETS}/hall-2-lounge-layout.png`
-    return { slug, imageWebp: src, imageWebpSm: src, imageAvif: src, imageAvifSm: src }
-  }
-
   return {
     slug,
     imageWebp: `${ASSETS}/${slug}.webp`,
@@ -29,12 +19,13 @@ function media(slug: string): TableSceneMedia {
 }
 
 const SLUG_BY_NUMBER: Record<number, string> = {
-  5: 't5-6',
-  6: 't5-6',
-  7: 't7-8',
-  8: 't7-8',
+  4: 't4',
+  5: 't5',
+  6: 't6',
+  7: 't7',
+  8: 't8',
   9: 't9-11-13',
-  10: 't10',
+  10: 't10-new',
   11: 't9-11-13',
   12: 't12-was15',
   13: 't9-11-13',
@@ -68,28 +59,65 @@ export type TableSceneCopy = {
 }
 
 const copyByNumber: Record<number, TableSceneCopy> = {
-  10: { kicker: 'Банкет · 8-10 мест', headline: 'Стол №10', description: 'Большой стол для компании и долгого вечера.' },
-  15: { kicker: 'У окна · 3 места', headline: 'Стол №15', description: 'Тихое место у окна на 3 гостей.' },
-  26: { kicker: 'Лаунж · 6 мест', headline: 'Стол №26', description: 'Круглый стол в центре второго зала.' },
-  27: { kicker: 'Банкет · 8-10 мест', headline: 'Стол №27', description: 'Большой диванный стол для праздника.' },
-  29: { kicker: 'Банкет · 8-10 мест', headline: 'Стол №29', description: 'Просторная посадка для большой компании.' },
+  4: {
+    kicker: 'Зал 1 · 2 места',
+    headline: 'Стол №4',
+    description: 'Тихий стол в первом зале: удобно для пары и спокойного ужина.',
+  },
+  5: {
+    kicker: 'Зал 1 · 2 места',
+    headline: 'Стол №5',
+    description: 'Камерная посадка с живой атмосферой зала и комфортной дистанцией.',
+  },
+  6: {
+    kicker: 'Зал 1 · 4 места',
+    headline: 'Стол №6',
+    description: 'Мягкая зона у окна: приватно, уютно, удобно для компании из четырёх.',
+  },
+  7: {
+    kicker: 'Зал 1 · 4 места',
+    headline: 'Стол №7',
+    description: 'Светлая диванная посадка у окна для семейного или дружеского вечера.',
+  },
+  8: {
+    kicker: 'Зал 2 · 4 места',
+    headline: 'Стол №8',
+    description: 'Просторный стол в открытом гриле: тепло, ритм кухни и комфортная посадка.',
+  },
+  10: {
+    kicker: 'Зал 2 · 4 места',
+    headline: 'Стол №10',
+    description: 'Центральная посадка в зоне гриля: для ужина в фокусе атмосферы зала.',
+  },
+  27: {
+    kicker: 'Зал 3 · 8-10 мест',
+    headline: 'Стол №27',
+    description: 'Большой диванный стол в лаунже для праздников и больших встреч.',
+  },
+  29: {
+    kicker: 'Зал 3 · 8-10 мест',
+    headline: 'Стол №29',
+    description: 'Просторная лаунж-посадка с приватной атмосферой и мягким светом.',
+  },
 }
 
 function defaultCopy(number: number): TableSceneCopy {
-  const hall = number <= 21 ? 1 : 2
+  const hall = number <= 7 ? 1 : number <= 21 ? 2 : 3
   const zone =
-    number === 10 || number === 27 || number === 29
-      ? 'Банкет'
-      : [9, 11, 12, 13, 15, 17, 19, 21, 23, 25].includes(number)
+    number === 27 || number === 29
+      ? 'Лаунж'
+      : [6, 7, 9, 11, 12, 13, 15, 17, 19, 21, 23, 25].includes(number)
         ? 'У окна'
-        : hall === 1
+        : hall === 2
           ? 'Открытый гриль'
-          : 'Лаунж / бар'
+          : hall === 3
+            ? 'Лаунж / бар'
+            : 'Первый зал'
 
   return {
     kicker: `${zone} · Зал ${hall}`,
     headline: `Стол №${number}`,
-    description: 'Фото и описание места обновлены под новый макет.',
+    description: 'Фото и описание столика обновлены под новый визуальный макет.',
   }
 }
 

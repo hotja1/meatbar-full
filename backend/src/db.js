@@ -214,6 +214,7 @@ export function bootstrap() {
     tx(seedTables)
   }
   ensureTableMigrationV1()
+  ensureTableMigrationV2()
   cleanupLegacyLightModeSettings()
 
   const categoryCount = db.prepare('SELECT COUNT(*) as c FROM menu_categories').get().c
@@ -249,6 +250,97 @@ function ensureTableMigrationV1() {
   }
 
   db.prepare("UPDATE tables SET status = 'disabled' WHERE number IN (5, 6, 7, 8)").run()
+
+  db.prepare(
+    `INSERT INTO settings (key, value, updated_at) VALUES (?, 'done', datetime('now'))
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).run(key)
+}
+
+function ensureTableMigrationV2() {
+  const key = 'migration.tables.v2.booking_halls_refresh'
+  const marker = db.prepare('SELECT value FROM settings WHERE key = ?').get(key)
+  if (marker?.value === 'done') return
+
+  const tx = db.transaction(() => {
+    const has4 = db.prepare('SELECT id FROM tables WHERE number = 4 LIMIT 1').get()
+    if (!has4) {
+      db.prepare(
+        `INSERT INTO tables (title, zone, seats, status, x, y, scene, hall, number, width, height, shape)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        'Стол №4',
+        'grill',
+        2,
+        'free',
+        560,
+        320,
+        'ближе к открытому грилю',
+        1,
+        4,
+        102,
+        62,
+        'rect',
+      )
+    }
+
+    const updateByNumber = db.prepare(
+      `UPDATE tables
+       SET hall = ?,
+           zone = ?,
+           seats = ?,
+           status = ?,
+           x = ?,
+           y = ?,
+           width = ?,
+           height = ?,
+           shape = ?,
+           scene = ?
+       WHERE number = ?`,
+    )
+
+    const rows = [
+      [1, 'grill', 2, 'free', 560, 320, 102, 62, 'rect', 'ближе к открытому грилю', 4],
+      [1, 'grill', 2, 'free', 586, 472, 106, 66, 'rect', 'ближе к открытому грилю', 5],
+      [1, 'window', 4, 'free', 946, 442, 214, 82, 'rect', 'у окна, мягкий свет', 6],
+      [1, 'window', 4, 'free', 930, 258, 226, 84, 'rect', 'у окна, мягкий свет', 7],
+
+      [2, 'banquet', 4, 'free', 612, 740, 224, 106, 'rect', 'просторная посадка для компании', 8],
+      [2, 'window', 4, 'free', 1054, 818, 180, 96, 'rect', 'у окна, мягкий свет', 9],
+      [2, 'banquet', 4, 'free', 612, 590, 224, 108, 'rect', 'просторная посадка для компании', 10],
+      [2, 'window', 4, 'free', 1054, 693, 180, 96, 'rect', 'у окна, мягкий свет', 11],
+      [2, 'window', 4, 'free', 1054, 564, 180, 94, 'rect', 'у окна, мягкий свет', 12],
+      [2, 'window', 2, 'free', 1026, 426, 120, 90, 'round', 'у окна, мягкий свет', 13],
+      [2, 'grill', 4, 'free', 642, 420, 176, 66, 'rect', 'ближе к открытому грилю', 14],
+      [2, 'window', 2, 'free', 1026, 343, 120, 90, 'round', 'у окна, мягкий свет', 15],
+      [2, 'grill', 4, 'free', 642, 307, 176, 64, 'rect', 'ближе к открытому грилю', 16],
+      [2, 'window', 2, 'free', 1026, 262, 120, 90, 'round', 'у окна, мягкий свет', 17],
+      [2, 'grill', 4, 'free', 642, 205, 176, 64, 'rect', 'ближе к открытому грилю', 18],
+      [2, 'window', 2, 'free', 1026, 182, 120, 90, 'round', 'у окна, мягкий свет', 19],
+      [2, 'grill', 4, 'free', 642, 104, 176, 64, 'rect', 'ближе к открытому грилю', 20],
+      [2, 'window', 2, 'free', 1026, 104, 120, 90, 'round', 'у окна, мягкий свет', 21],
+
+      [3, 'lounge', 4, 'free', 560, 646, 142, 76, 'rect', 'лаунж-зона, спокойный ритм', 22],
+      [3, 'window', 2, 'free', 752, 802, 100, 92, 'round', 'у окна, мягкий свет', 23],
+      [3, 'lounge', 4, 'reserved', 448, 760, 142, 76, 'rect', 'лаунж-зона, спокойный ритм', 24],
+      [3, 'window', 2, 'free', 904, 582, 92, 84, 'round', 'у окна, мягкий свет', 25],
+      [3, 'lounge', 6, 'free', 996, 364, 114, 102, 'round', 'лаунж-зона, спокойный ритм', 26],
+      [3, 'lounge', 8, 'free', 958, 172, 194, 76, 'rect', 'лаунж-зона, спокойный ритм', 27],
+      [3, 'lounge', 8, 'free', 730, 108, 194, 76, 'rect', 'лаунж-зона, спокойный ритм', 29],
+      [3, 'lounge', 4, 'free', 574, 276, 152, 84, 'rect', 'лаунж-зона, спокойный ритм', 30],
+      [3, 'lounge', 4, 'free', 706, 326, 152, 84, 'rect', 'лаунж-зона, спокойный ритм', 31],
+      [3, 'bar', 4, 'held', 830, 390, 152, 86, 'rect', 'возле бара, динамичный вечер', 32],
+      [3, 'bar', 4, 'free', 734, 530, 152, 86, 'rect', 'возле бара, динамичный вечер', 33],
+      [3, 'bar', 4, 'free', 574, 448, 152, 84, 'rect', 'возле бара, динамичный вечер', 34],
+      [3, 'lounge', 4, 'free', 424, 362, 152, 84, 'rect', 'лаунж-зона, спокойный ритм', 35],
+    ]
+
+    for (const row of rows) {
+      updateByNumber.run(...row)
+    }
+  })
+
+  tx()
 
   db.prepare(
     `INSERT INTO settings (key, value, updated_at) VALUES (?, 'done', datetime('now'))

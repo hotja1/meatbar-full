@@ -10,8 +10,8 @@ export type RestaurantTable = {
   y: number
   scene: string
   notes?: string
-  /** Hall number (1 = main, 2 = bar/lounge). Optional for backwards compat. */
-  hall?: 1 | 2
+  /** Hall number (1 = first hall, 2 = open grill, 3 = lounge/bar). */
+  hall?: 1 | 2 | 3
   /** Display number on the floorplan, e.g. 14. Defaults to id. */
   number?: number
   /** Geometry for the realistic map. */

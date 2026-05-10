@@ -13,7 +13,7 @@ import './tablemap.css'
 export type MapTable = {
   id: number
   number: number
-  hall: 1 | 2
+  hall: 1 | 2 | 3
   zone: 'window' | 'grill' | 'bar' | 'lounge' | 'banquet'
   seats: number
   seatsMax?: number
@@ -41,14 +41,22 @@ type HoverState = {
 const VIEW_WIDTH = 1448
 const VIEW_HEIGHT = 1086
 const VIEWBOX = `0 0 ${VIEW_WIDTH} ${VIEW_HEIGHT}`
+const HALLS: ReadonlyArray<1 | 2 | 3> = [1, 2, 3]
 
-const HALL_IMAGE: Record<1 | 2, string> = {
-  1: '/assets/tables/hall-1-layout.png',
-  2: '/assets/tables/hall-2-lounge-layout.png',
+const HALL_IMAGE: Record<1 | 2 | 3, string> = {
+  1: '/assets/tables/hall-1-first-layout.png',
+  2: '/assets/tables/hall-2-open-grill-layout.png',
+  3: '/assets/tables/hall-3-lounge-bar-layout.png',
+}
+
+const HALL_LABEL: Record<1 | 2 | 3, string> = {
+  1: 'Зал 1 · Первый зал',
+  2: 'Зал 2 · Открытый гриль',
+  3: 'Зал 3 · Лаунж и бар',
 }
 
 export function TableMap({ tables, selected, onSelect }: TableMapProps) {
-  const [activeHall, setActiveHall] = useState<1 | 2>(1)
+  const [activeHall, setActiveHall] = useState<1 | 2 | 3>(1)
   const [hovered, setHovered] = useState<HoverState | null>(null)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
@@ -70,13 +78,12 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
   )
 
   const counts = useMemo(() => {
-    const byHall = (hall: 1 | 2) => tables.filter((t) => t.hall === hall && t.status !== 'disabled')
-    const free = (hall: 1 | 2) => byHall(hall).filter((t) => t.status === 'free').length
+    const byHall = (hall: 1 | 2 | 3) => tables.filter((t) => t.hall === hall && t.status !== 'disabled')
+    const free = (hall: 1 | 2 | 3) => byHall(hall).filter((t) => t.status === 'free').length
     return {
-      free1: free(1),
-      free2: free(2),
-      total1: byHall(1).length,
-      total2: byHall(2).length,
+      1: { free: free(1), total: byHall(1).length },
+      2: { free: free(2), total: byHall(2).length },
+      3: { free: free(3), total: byHall(3).length },
     }
   }, [tables])
 
@@ -134,28 +141,20 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
     <div className="floorplan">
       <div className="floorplan-controls">
         <div className="floorplan-tabs" role="tablist" aria-label="Залы">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeHall === 1}
-            aria-controls="floorplan-stage"
-            className={activeHall === 1 ? 'active' : ''}
-            onClick={() => setActiveHall(1)}
-          >
-            <span>Зал 1 · Открытый гриль</span>
-            <small>{counts.free1} из {counts.total1} свободно</small>
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeHall === 2}
-            aria-controls="floorplan-stage"
-            className={activeHall === 2 ? 'active' : ''}
-            onClick={() => setActiveHall(2)}
-          >
-            <span>Зал 2 · Лаунж и бар</span>
-            <small>{counts.free2} из {counts.total2} свободно</small>
-          </button>
+          {HALLS.map((hall) => (
+            <button
+              key={hall}
+              type="button"
+              role="tab"
+              aria-selected={activeHall === hall}
+              aria-controls="floorplan-stage"
+              className={activeHall === hall ? 'active' : ''}
+              onClick={() => setActiveHall(hall)}
+            >
+              <span>{HALL_LABEL[hall]}</span>
+              <small>{counts[hall].free} из {counts[hall].total} свободно</small>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -189,6 +188,11 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
             ].join(' ')
             const cx = table.x + table.width / 2
             const cy = table.y + table.height / 2
+            const rx = table.x + 2
+            const ry = table.y + 2
+            const rw = Math.max(8, table.width - 4)
+            const rh = Math.max(8, table.height - 4)
+            const rr = Math.min(table.width, table.height) * 0.44
 
             return (
               <g
@@ -209,13 +213,15 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
               >
                 {table.shape === 'round' ? (
                   <>
-                    <circle cx={cx} cy={cy} r={Math.min(table.width, table.height) / 2} className="floor-table-hit" />
-                    {isSelected ? <circle cx={cx} cy={cy} r={Math.min(table.width, table.height) / 2} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
+                    <circle cx={cx} cy={cy} r={rr} className="floor-table-hit" />
+                    <circle cx={cx} cy={cy} r={rr} className={`floor-table-outline floor-table-outline-${table.status}`} />
+                    {isSelected ? <circle cx={cx} cy={cy} r={rr} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
                   </>
                 ) : (
                   <>
-                    <rect x={table.x} y={table.y} width={table.width} height={table.height} rx={12} className="floor-table-hit" />
-                    {isSelected ? <rect x={table.x} y={table.y} width={table.width} height={table.height} rx={12} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
+                    <rect x={rx} y={ry} width={rw} height={rh} rx={12} className="floor-table-hit" />
+                    <rect x={rx} y={ry} width={rw} height={rh} rx={12} className={`floor-table-outline floor-table-outline-${table.status}`} />
+                    {isSelected ? <rect x={rx} y={ry} width={rw} height={rh} rx={12} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
                   </>
                 )}
               </g>
@@ -260,11 +266,22 @@ function TableTooltip({ state, tooltipRef }: { state: HoverState; tooltipRef: { 
       <div className="floor-tooltip__body">
         <strong>Стол №{table.number}</strong>
         <span className="floor-tooltip__meta">{formatSeats(table.seats, table.seatsMax)} · {zoneLabel(table.zone)}</span>
-        <span className={`floor-tooltip__noise floor-tooltip__noise--${noise}`}>{noise}</span>
+        <span className={`floor-tooltip__noise floor-tooltip__noise--${noise}`}>{noiseLabel(noise)}</span>
         <span className={`floor-tooltip__status floor-tooltip__status--${table.status}`}>{statusLabel(table.status)}</span>
       </div>
     </div>
   )
+}
+
+function noiseLabel(noise: TableNoise) {
+  switch (noise) {
+    case 'quiet':
+      return 'тихо'
+    case 'moderate':
+      return 'умеренно'
+    case 'lively':
+      return 'живо'
+  }
 }
 
 function zoneLabel(zone: MapTable['zone']) {

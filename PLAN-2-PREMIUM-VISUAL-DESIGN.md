@@ -583,3 +583,12 @@ content-visibility, AVIF).
 - [x] Gallery rail render path trimmed: doubled rail list is memoized once per menu-update (less GC churn during frequent UI state changes).
 - [x] Touch and low-tier header interactions now skip expensive hover glow layers while preserving core premium typography/contrast.
 - [x] Added long-task telemetry + API `Server-Timing` instrumentation so visual regressions can be correlated with real runtime bottlenecks.
+## UPDATE 2026-05-10 (pass 7 — booking halls visual refresh)
+
+- Hall maps replaced with new signed layouts:
+  - Hall 1: "Первый зал"
+  - Hall 2: "Открытый гриль"
+  - Hall 3: "Лаунж и бар"
+- Incorrect red captions removed; white corrected hall titles added directly on hall images.
+- Branded logo block added in the same top area on all hall maps for visual consistency.
+- Table-map interaction upgraded: click targets tightened to table geometry, persistent status color overlays added.
