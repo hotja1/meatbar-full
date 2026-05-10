@@ -79,32 +79,35 @@
 }
 
 .floor-table-outline {
-  fill: rgba(245, 201, 120, 0.04);
-  stroke: rgba(245, 201, 120, 0.72);
-  stroke-width: 1.8;
+  fill: transparent;
+  stroke: rgba(245, 201, 120, 0.58);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 0.9;
+  vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
 .floor-table-outline-free {
-  fill: rgba(123, 214, 141, 0.08);
-  stroke: rgba(123, 214, 141, 0.86);
+  stroke: rgba(123, 214, 141, 0.72);
 }
 
 .floor-table-outline-reserved {
-  fill: rgba(247, 150, 130, 0.1);
-  stroke: rgba(247, 150, 130, 0.88);
+  stroke: rgba(247, 150, 130, 0.72);
 }
 
 .floor-table-outline-held {
-  fill: rgba(245, 201, 120, 0.12);
-  stroke: rgba(245, 201, 120, 0.9);
+  stroke: rgba(245, 201, 120, 0.72);
 }
 
 .floor-table-highlight {
   fill: rgba(255, 208, 126, 0.06);
   stroke: rgba(255, 216, 144, 0.88);
-  stroke-width: 2.2;
-  filter: drop-shadow(0 0 10px rgba(255, 185, 92, 0.48));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 6px rgba(255, 185, 92, 0.34));
   pointer-events: none;
 }
 

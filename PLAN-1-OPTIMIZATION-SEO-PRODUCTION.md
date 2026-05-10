@@ -519,3 +519,6 @@
 - Added optimized image pipeline for new table photos (`webp` + `avif` + `-sm` mobile variants).
 - Verification sequence passed: `guard:mojibake` -> `lint` (3 known admin warnings) -> `build` -> `perf:budgets`.
 - Budget gate status: OK (`largest js.gz = 100.68 KB`, `largest css.gz = 13.71 KB`).
+- [x] Booking map precision update: table hit/outline geometry moved to per-table tabletop bounds, plus Hall 2 correction pass for round/right-wall line alignment.
+- [x] Booking map perf-safe refinement: table overlays now use static SVG polygons/ellipses only, with thinner non-scaling strokes and reduced highlight glow; budget guard remains OK after the visual correction.
+- [x] Final verification after old button-zone removal and tighter tabletop outlines: `guard:mojibake` -> `lint` (3 known admin warnings) -> `build` -> `perf:budgets`; budget gate OK (`largest js.gz = 101.32 KB`, `largest css.gz = 13.71 KB`).

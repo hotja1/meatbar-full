@@ -87,47 +87,48 @@ type Geo = {
   w?: number
   h?: number
   shape?: 'rect' | 'round'
+  points?: ReadonlyArray<readonly [number, number]>
   status?: MapTable['status']
 }
 
 const hall1Layout: Record<number, Geo> = {
-  4: { x: 560, y: 320, w: 102, h: 62 },
-  5: { x: 586, y: 472, w: 106, h: 66 },
-  6: { x: 946, y: 442, w: 214, h: 82 },
-  7: { x: 930, y: 258, w: 226, h: 84 },
+  4: { x: 574, y: 326, w: 88, h: 62, points: [[574, 326], [657, 333], [662, 382], [582, 388]] },
+  5: { x: 590, y: 420, w: 95, h: 70, points: [[590, 420], [675, 427], [685, 485], [595, 490]] },
+  6: { x: 970, y: 438, w: 246, h: 59, points: [[970, 438], [1210, 448], [1216, 496], [980, 495]] },
+  7: { x: 885, y: 275, w: 200, h: 65, points: [[885, 275], [1085, 282], [1085, 333], [910, 340]] },
 }
 
 const hall2Layout: Record<number, Geo> = {
-  20: { x: 642, y: 104, w: 176, h: 64 },
-  18: { x: 642, y: 205, w: 176, h: 64 },
-  16: { x: 642, y: 307, w: 176, h: 64 },
-  14: { x: 642, y: 420, w: 176, h: 66 },
-  10: { x: 612, y: 590, w: 224, h: 108 },
-  8: { x: 612, y: 740, w: 224, h: 106 },
-  21: { x: 1026, y: 104, w: 120, h: 90, shape: 'round' },
-  19: { x: 1026, y: 182, w: 120, h: 90, shape: 'round' },
-  17: { x: 1026, y: 262, w: 120, h: 90, shape: 'round' },
-  15: { x: 1026, y: 343, w: 120, h: 90, shape: 'round' },
-  13: { x: 1026, y: 426, w: 120, h: 90, shape: 'round' },
-  12: { x: 1054, y: 564, w: 180, h: 94 },
-  11: { x: 1054, y: 693, w: 180, h: 96 },
-  9: { x: 1054, y: 818, w: 180, h: 96 },
+  20: { x: 668, y: 96, w: 107, h: 64, points: [[668, 96], [775, 100], [772, 160], [668, 158]] },
+  18: { x: 650, y: 252, w: 125, h: 55, points: [[650, 252], [775, 256], [772, 305], [650, 302]] },
+  16: { x: 650, y: 353, w: 125, h: 57, points: [[650, 353], [775, 358], [772, 410], [652, 406]] },
+  14: { x: 665, y: 462, w: 108, h: 58, points: [[665, 462], [773, 466], [770, 520], [665, 518]] },
+  10: { x: 650, y: 615, w: 140, h: 61, points: [[650, 615], [790, 620], [786, 676], [655, 673]] },
+  8: { x: 635, y: 780, w: 170, h: 65, points: [[635, 780], [805, 788], [800, 845], [640, 842]] },
+  21: { x: 1084, y: 84, w: 100, h: 62, shape: 'round' },
+  19: { x: 1081, y: 191, w: 100, h: 62, shape: 'round' },
+  17: { x: 1078, y: 291, w: 105, h: 64, shape: 'round' },
+  15: { x: 1075, y: 394, w: 105, h: 64, shape: 'round' },
+  13: { x: 1073, y: 494, w: 108, h: 68, shape: 'round' },
+  12: { x: 1138, y: 596, w: 148, h: 40, points: [[1138, 596], [1286, 596], [1282, 635], [1142, 636]] },
+  11: { x: 1100, y: 722, w: 162, h: 45, points: [[1100, 722], [1262, 724], [1258, 766], [1105, 767]] },
+  9: { x: 1090, y: 898, w: 160, h: 48, points: [[1090, 900], [1250, 898], [1246, 944], [1095, 946]] },
 }
 
 const hall3Layout: Record<number, Geo> = {
-  29: { x: 730, y: 108, w: 194, h: 76 },
-  27: { x: 958, y: 172, w: 194, h: 76 },
-  30: { x: 574, y: 276, w: 152, h: 84 },
-  31: { x: 706, y: 326, w: 152, h: 84 },
-  35: { x: 424, y: 362, w: 152, h: 84 },
-  34: { x: 574, y: 448, w: 152, h: 84 },
-  32: { x: 830, y: 390, w: 152, h: 86 },
-  33: { x: 734, y: 530, w: 152, h: 86 },
-  26: { x: 996, y: 364, w: 114, h: 102, shape: 'round' },
-  25: { x: 904, y: 582, w: 92, h: 84, shape: 'round' },
-  23: { x: 752, y: 802, w: 100, h: 92, shape: 'round' },
-  22: { x: 560, y: 646, w: 142, h: 76 },
-  24: { x: 448, y: 760, w: 142, h: 76 },
+  29: { x: 735, y: 135, w: 135, h: 57, points: [[760, 135], [870, 160], [850, 192], [735, 167]] },
+  27: { x: 1030, y: 210, w: 130, h: 60, points: [[1050, 210], [1160, 235], [1140, 270], [1030, 245]] },
+  30: { x: 565, y: 315, w: 120, h: 52, points: [[585, 315], [685, 337], [665, 367], [565, 345]] },
+  31: { x: 715, y: 386, w: 120, h: 59, points: [[735, 386], [835, 410], [815, 445], [715, 420]] },
+  35: { x: 390, y: 425, w: 155, h: 65, points: [[410, 425], [545, 455], [520, 490], [390, 460]] },
+  34: { x: 580, y: 525, w: 140, h: 60, points: [[600, 525], [720, 552], [695, 585], [580, 558]] },
+  32: { x: 835, y: 465, w: 135, h: 60, points: [[855, 465], [970, 490], [950, 525], [835, 500]] },
+  33: { x: 760, y: 590, w: 135, h: 60, points: [[780, 590], [895, 617], [875, 650], [760, 624]] },
+  26: { x: 1034, y: 405, w: 108, h: 78, shape: 'round' },
+  25: { x: 883, y: 712, w: 106, h: 86, shape: 'round' },
+  23: { x: 724, y: 826, w: 106, h: 86, shape: 'round' },
+  22: { x: 580, y: 650, w: 88, h: 50, points: [[595, 650], [665, 670], [647, 700], [580, 680]] },
+  24: { x: 405, y: 770, w: 120, h: 60, points: [[425, 770], [525, 800], [505, 830], [405, 805]] },
 }
 
 function buildTable(num: number, hall: 1 | 2 | 3, geo: Geo): MapTable {
@@ -145,6 +146,7 @@ function buildTable(num: number, hall: 1 | 2 | 3, geo: Geo): MapTable {
     width: geo.w ?? 70,
     height: geo.h ?? 60,
     shape: geo.shape ?? 'rect',
+    points: geo.points,
     scene: sceneByZone[zone],
   }
 }
@@ -160,17 +162,11 @@ export const TOP_TABLES: ReadonlySet<number> = new Set([10, 27, 29, 32, 33, 34, 
 export type TableNoise = 'quiet' | 'moderate' | 'lively'
 
 export function getTableNoise(table: MapTable): TableNoise {
-  const cx = table.x + table.width / 2
-  const cy = table.y + table.height / 2
-  const centerByHall: Record<1 | 2 | 3, { x: number; y: number }> = {
-    1: { x: 840, y: 430 },
-    2: { x: 820, y: 420 },
-    3: { x: 780, y: 430 },
+  if (table.hall === 3) return 'lively'
+  if (table.hall === 1 || table.hall === 2) {
+    const quietTables = new Set([8, 9, 10, 11, 13])
+    return quietTables.has(table.number) ? 'quiet' : 'moderate'
   }
-  const center = centerByHall[table.hall]
-  const d = Math.hypot(cx - center.x, cy - center.y)
-  if (d < 210) return 'lively'
-  if (d < 420) return 'moderate'
   return 'quiet'
 }
 

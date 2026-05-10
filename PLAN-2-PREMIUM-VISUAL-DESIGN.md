@@ -592,3 +592,8 @@ content-visibility, AVIF).
 - Incorrect red captions removed; white corrected hall titles added directly on hall images.
 - Branded logo block added in the same top area on all hall maps for visual consistency.
 - Table-map interaction upgraded: click targets tightened to table geometry, persistent status color overlays added.
+- [x] Per-table overlay refinement pass completed: hall table contours re-aligned to tabletop surfaces (not seat zones), with second tuning for round/right-line tables in Hall 2.
+- [x] Table 12/13 media mapping updated to match the new concept: table 12 now uses the green-wall scene, table 13 uses the window round-table scene.
+- [x] Booking map precision pass completed: perspective tables now use individual SVG polygon contours, round tables use oval/ellipse geometry, and free-table outlines are thinner with non-scaling strokes to avoid heavy visual noise and scroll cost.
+- [x] Hall badge logo switched to the active white brand mark used in the site header/splash (`meatbar-logo-mark.webp`); Hall 2/3 top masks reduced so they do not cover embedded hall labels such as kitchen/open-grill text.
+- [x] Old button-like zones removed from the booking map layer; every visible status contour is now a dedicated tabletop polygon/ellipse tuned per table, not a reused generic button shape.

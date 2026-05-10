@@ -23,6 +23,7 @@ export type MapTable = {
   width: number
   height: number
   shape?: 'rect' | 'round'
+  points?: ReadonlyArray<readonly [number, number]>
   scene?: string
 }
 
@@ -48,6 +49,56 @@ const HALL_IMAGE: Record<1 | 2 | 3, string> = {
   2: '/assets/tables/hall-2-open-grill-layout.png',
   3: '/assets/tables/hall-3-lounge-bar-layout.png',
 }
+
+const HALL_BADGE: Record<
+  1 | 2 | 3,
+  {
+    title: string
+    titleX: number
+    titleY: number
+    titleSize: number
+    logoX: number
+    logoY: number
+    logoW: number
+    logoH: number
+    mask?: { x: number; y: number; w: number; h: number }
+  }
+> = {
+  1: {
+    title: 'ЗАЛ 1 · ПЕРВЫЙ ЗАЛ',
+    titleX: 22,
+    titleY: 66,
+    titleSize: 60,
+    logoX: 24,
+    logoY: 82,
+    logoW: 152,
+    logoH: 92,
+  },
+  2: {
+    title: 'ЗАЛ 2 · ОТКРЫТЫЙ ГРИЛЬ',
+    titleX: 22,
+    titleY: 66,
+    titleSize: 58,
+    logoX: 24,
+    logoY: 82,
+    logoW: 152,
+    logoH: 92,
+    mask: { x: 0, y: 0, w: 430, h: 44 },
+  },
+  3: {
+    title: 'ЗАЛ 3 · ЛАУНЖ И БАР',
+    titleX: 22,
+    titleY: 66,
+    titleSize: 58,
+    logoX: 24,
+    logoY: 82,
+    logoW: 152,
+    logoH: 92,
+    mask: { x: 0, y: 0, w: 406, h: 44 },
+  },
+}
+
+const BADGE_LOGO = '/assets/meatbar-logo-mark.webp'
 
 const HALL_LABEL: Record<1 | 2 | 3, string> = {
   1: 'Зал 1 · Первый зал',
@@ -177,22 +228,75 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
           />
           <rect x="0" y="0" width={VIEW_WIDTH} height={VIEW_HEIGHT} fill="rgba(168,120,72,0.08)" />
 
+          {(() => {
+            const badge = HALL_BADGE[activeHall]
+            return (
+              <g className="hall-badge" pointerEvents="none">
+                {badge.mask ? (
+                  <rect
+                    x={badge.mask.x}
+                    y={badge.mask.y}
+                    width={badge.mask.w}
+                    height={badge.mask.h}
+                    fill="rgba(0,0,0,0.96)"
+                  />
+                ) : null}
+                <text
+                  x={badge.titleX}
+                  y={badge.titleY}
+                  fill="#ffffff"
+                  fontSize={badge.titleSize}
+                  fontWeight="800"
+                  style={{
+                    textShadow: '0 2px 5px rgba(0,0,0,.55)',
+                    letterSpacing: '0.01em',
+                  }}
+                >
+                  {badge.title}
+                </text>
+                <image
+                  href={BADGE_LOGO}
+                  x={badge.logoX}
+                  y={badge.logoY}
+                  width={badge.logoW}
+                  height={badge.logoH}
+                  preserveAspectRatio="xMinYMin meet"
+                />
+              </g>
+            )
+          })()}
+
           {hallTables.map((table) => {
             const isSelected = selected?.id === table.id
             const isTop = TOP_TABLES.has(table.number)
+            const polygonPoints = table.points?.map(([x, y]) => `${x},${y}`).join(' ')
+            const polygonCenter = table.points?.reduce(
+              (acc, [x, y]) => ({ x: acc.x + x, y: acc.y + y }),
+              { x: 0, y: 0 },
+            )
+            const polygonCount = table.points?.length ?? 0
             const className = [
               'floor-table',
               `floor-table-${table.status}`,
               isSelected ? 'is-selected' : '',
               isTop ? 'floor-table-top-tier' : '',
             ].join(' ')
-            const cx = table.x + table.width / 2
-            const cy = table.y + table.height / 2
-            const rx = table.x + 2
-            const ry = table.y + 2
-            const rw = Math.max(8, table.width - 4)
-            const rh = Math.max(8, table.height - 4)
-            const rr = Math.min(table.width, table.height) * 0.44
+            const cx = polygonCenter && polygonCount > 0 ? polygonCenter.x / polygonCount : table.x + table.width / 2
+            const cy = polygonCenter && polygonCount > 0 ? polygonCenter.y / polygonCount : table.y + table.height / 2
+            const baseInset = 4
+            const outlineInset = 5
+            const rx = table.x + outlineInset
+            const ry = table.y + outlineInset
+            const rw = Math.max(10, table.width - outlineInset * 2)
+            const rh = Math.max(10, table.height - outlineInset * 2)
+            const hitX = table.x + baseInset
+            const hitY = table.y + baseInset
+            const hitW = Math.max(12, table.width - baseInset * 2)
+            const hitH = Math.max(12, table.height - baseInset * 2)
+            const ellipseHitRx = Math.max(6, table.width / 2)
+            const ellipseHitRy = Math.max(6, table.height / 2)
+            const ellipseRx = Math.max(5, table.width / 2)
+            const ellipseRy = Math.max(5, table.height / 2)
 
             return (
               <g
@@ -211,15 +315,21 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
                 }}
                 aria-label={`Стол №${table.number}, ${formatSeats(table.seats, table.seatsMax)}, ${statusWord(table.status)}`}
               >
-                {table.shape === 'round' ? (
+                {polygonPoints ? (
                   <>
-                    <circle cx={cx} cy={cy} r={rr} className="floor-table-hit" />
-                    <circle cx={cx} cy={cy} r={rr} className={`floor-table-outline floor-table-outline-${table.status}`} />
-                    {isSelected ? <circle cx={cx} cy={cy} r={rr} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
+                    <polygon points={polygonPoints} className="floor-table-hit" />
+                    <polygon points={polygonPoints} className={`floor-table-outline floor-table-outline-${table.status}`} />
+                    {isSelected ? <polygon points={polygonPoints} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
+                  </>
+                ) : table.shape === 'round' ? (
+                  <>
+                    <ellipse cx={cx} cy={cy} rx={ellipseHitRx} ry={ellipseHitRy} className="floor-table-hit" />
+                    <ellipse cx={cx} cy={cy} rx={ellipseRx} ry={ellipseRy} className={`floor-table-outline floor-table-outline-${table.status}`} />
+                    {isSelected ? <ellipse cx={cx} cy={cy} rx={ellipseRx} ry={ellipseRy} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
                   </>
                 ) : (
                   <>
-                    <rect x={rx} y={ry} width={rw} height={rh} rx={12} className="floor-table-hit" />
+                    <rect x={hitX} y={hitY} width={hitW} height={hitH} rx={12} className="floor-table-hit" />
                     <rect x={rx} y={ry} width={rw} height={rh} rx={12} className={`floor-table-outline floor-table-outline-${table.status}`} />
                     {isSelected ? <rect x={rx} y={ry} width={rw} height={rh} rx={12} className={`floor-table-highlight floor-table-highlight-${table.status}`} /> : null}
                   </>
