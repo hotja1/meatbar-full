@@ -1,71 +1,94 @@
-# Мясо Бар — полный архив проекта
+# Мясо Бар — актуальный проект (frontend + backend)
 
-## Структура
+Последнее обновление README: **2026-05-10**.
 
-- `frontend/` — исходный код фронтенда (React 19 + TypeScript + Vite)
-  - `frontend/dist/` — production-сборка (готова к деплою как статика)
-- `backend/` — Express + SQLite + Socket.IO сервер
-- `PLAN-1-OPTIMIZATION-SEO-PRODUCTION.md` — план оптимизации, SEO Яндекс/Google для Нижневартовска, безопасность, production-readiness
-- `PLAN-2-PREMIUM-VISUAL-DESIGN.md` — план премиум-визуала без потери производительности
+Этот репозиторий содержит рабочий код сайта/админки, планы развития и жёсткие правила, чтобы проект не ломался при работе разными ИИ.
 
-## Что было сделано в этой версии (Phase 13)
+## Что в репозитории
 
-1. **Огоньки убраны** — со столиков удалены spotlight, ★-heatmap, hover-glow, pulse, dim
-2. **Реалистичный зал** — добавлены `ChairShape` (стулья со спинкой, hall-aware: кожа/велюр), `Banquette` (диваны вдоль стен с capitonné), паркет «ёлочка» Hall 1, кирпичная стена Hall 2, оконные блики
-3. **Зум удалён** — кнопка зума, состояние, ViewBox-анимация и константы вычищены
-4. **Кнопка «Бронь» в шапке** — preload BarMenuSection + плавный скролл к `#booking` с 4-stage settle (180/360/540/760 мс) + `scroll-margin-top: 96px`
+- `frontend/` — React 19 + TypeScript + Vite (сайт + `/admin` SPA)
+- `backend/` — Express + SQLite + Socket.IO API
+- `docs/` — baseline производительности, запуск в production, SEO checklist
+- `PLAN-1-OPTIMIZATION-SEO-PRODUCTION.md` — план/статус оптимизации, SEO, безопасности
+- `PLAN-2-PREMIUM-VISUAL-DESIGN.md` — план/статус premium-визуала без потери производительности
+- `PRAVILA.md` — главные жёсткие правила проекта
+- `WORKFLOW.md` — обязательный процесс работы любых ИИ с проектом
 
-## Запуск frontend (development)
+## Важные правила перед любыми изменениями
+
+Перед правками обязательно прочитать:
+
+1. `PRAVILA.md`
+2. `WORKFLOW.md`
+3. `PLAN-1-OPTIMIZATION-SEO-PRODUCTION.md`
+4. `PLAN-2-PREMIUM-VISUAL-DESIGN.md`
+5. `docs/PERF-BASELINE.md`
+
+Без этого менять код нельзя.
+
+## Быстрый старт (локально)
+
+### Frontend (dev)
 
 ```bash
 cd frontend
 npm install
-# при необходимости: скопировать .env.example -> .env и задать значения
 npm run dev
 ```
 
-## Сборка frontend (production)
-
-```bash
-cd frontend
-npm install
-npm run build
-# → dist/
-```
-
-## SEO-настройка перед production (Нижневартовск)
-
-- Для корректных `robots.txt`/`sitemap.xml` задайте `SITE_URL`:
-  - frontend build: `SITE_URL=https://<ваш-домен> npm run build`
-  - backend runtime: `SITE_URL=https://<ваш-домен> npm start`
-- Опционально можно задать `CLEAN_PARAMS` (через `&`) для `robots.txt`.
-- Верификация поисковиков (автогенерация файлов при build):
-  - `YANDEX_VERIFICATION_CODE=<код>` → файл `yandex_<код>.html`
-  - `GOOGLE_SITE_VERIFICATION=<код>` → файл `google<код>.html`
-- Аналитика (опционально, без ключей по умолчанию):
-  - `VITE_GA_MEASUREMENT_ID=<GA4_ID>`
-  - `VITE_YM_COUNTER_ID=<YANDEX_COUNTER_ID>`
-- Без `SITE_URL` используется fallback `https://мясо-бар.рф` (целевой домен проекта).
-- Для боевого запуска см. подробный чеклист: `docs/SEO-LAUNCH-CHECKLIST.md`.
-
-## Запуск backend
+### Backend (dev)
 
 ```bash
 cd backend
 npm install
-# при необходимости: скопировать .env.example -> .env и задать значения
-npm start
-# слушает порт 3001 по умолчанию
+npm run dev
 ```
 
-## Превью текущей версии
+По умолчанию backend слушает `3001`.
 
-https://restaurant-reservation-app-b8wl5uuv.devinapps.com
+## Production build frontend
 
-## Качество
+```bash
+cd frontend
+npm run build
+```
 
-- TypeScript: `tsc -b --noEmit` — 0 ошибок
-- ESLint: `npm run lint` — 0 errors (3 предсуществующих warning в admin views)
-- Build: `npm run build` — успех, все чанки + pre-compression (gzip + brotli)
-- Budget-check: `npm run perf:budgets` — контроль gzip-бюджета build-артефактов
-- Runbook production: `docs/PRODUCTION-RUNBOOK.md`
+Сборка попадает в `frontend/dist/`.
+
+## Обязательные проверки после изменений
+
+Строгий порядок:
+
+```bash
+npm --prefix frontend run guard:mojibake
+npm --prefix frontend run lint
+npm --prefix frontend run build
+npm --prefix frontend run perf:budgets
+node --check backend/src/index.js
+```
+
+Если что-то падает — задача не считается завершённой.
+
+## SEO и домен (Нижневартовск)
+
+- целевой домен: `https://мясо-бар.рф`
+- генерация `robots.txt` и `sitemap.xml` поддерживает `SITE_URL`
+- верификация поисковиков через env:
+  - `YANDEX_VERIFICATION_CODE`
+  - `GOOGLE_SITE_VERIFICATION`
+- подробный боевой чеклист: `docs/SEO-LAUNCH-CHECKLIST.md`
+
+## Текущий статус проекта
+
+Актуальный статус выполнения задач ведётся в:
+
+- `PLAN-1-OPTIMIZATION-SEO-PRODUCTION.md` (разделы `UPDATE`)
+- `PLAN-2-PREMIUM-VISUAL-DESIGN.md` (разделы `UPDATE`)
+- `docs/PERF-BASELINE.md` (бенчмарки и проходы оптимизации)
+
+Именно эти файлы считаются источником правды по прогрессу.
+
+## Примечание по GitHub и ИИ
+
+Если репозиторий публичный, любой ИИ с доступом к интернету может читать проект.  
+Чтобы ИИ не вносил лишние или опасные изменения, используйте шаблон из `WORKFLOW.md`.
