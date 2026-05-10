@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /socket.io/
+Disallow: /admin
+
+User-agent: Yandex
+Allow: /
+Disallow: /api/
+Disallow: /socket.io/
+Disallow: /admin
+Clean-param: utm_source&utm_medium&utm_campaign&utm_term&utm_content&utm_id&utm_referrer&yclid&ysclid&fbclid /
+
+Host: xn----8sbc6bkpc5i.xn--p1ai
+Sitemap: https://xn----8sbc6bkpc5i.xn--p1ai/sitemap.xml

@@ -1,0 +1,176 @@
+/*
+ * FireText — text starts hidden. Fire sweeps through letter shapes
+ * on canvas. After fire completes, CSS text fades in. After 30s
+ * text fades out and cycle repeats.
+ */
+
+.firetext {
+  position: relative;
+  display: inline-block;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  overflow: visible;
+  padding: 0.18em 0.06em 0.16em;
+  margin: -0.18em -0.06em -0.16em;
+}
+
+.firetext .ft-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.firetext .ft-visual {
+  position: relative;
+  display: inline-block;
+  white-space: normal;
+  z-index: 1;
+}
+
+.firetext .ft-word {
+  display: inline-block;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+
+.firetext .ft-space {
+  display: inline-block;
+  width: 0.32em;
+}
+
+/* ---- PHASE: hidden ---- */
+.ft-phase-hidden .ft-char {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: none;
+}
+
+/* ---- PHASE: burning ---- */
+/* Text stays FULLY TRANSPARENT during burning.
+ * Fire is rendered only on the canvas overlay.
+ * No CSS text animation — no duplication. */
+.ft-phase-burning .ft-char {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: none;
+}
+
+/* ---- PHASE: revealed ---- */
+/* Text fades in from transparent to cream after fire finishes */
+.ft-phase-revealed .ft-char {
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: ft-appear 500ms ease-out forwards;
+  animation-delay: var(--char-delay, 0ms);
+}
+
+@keyframes ft-appear {
+  0% {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+      0 0 8px rgba(255, 120, 30, 0.5),
+      0 0 14px rgba(255, 70, 10, 0.3);
+  }
+  50% {
+    color: #ffcc66;
+    -webkit-text-fill-color: #ffcc66;
+    text-shadow:
+      0 0 10px rgba(255, 140, 40, 0.4);
+  }
+  100% {
+    color: var(--cream, #f6eee1);
+    -webkit-text-fill-color: var(--cream, #f6eee1);
+    text-shadow:
+      0 0 6px rgba(255, 255, 255, 0.12),
+      0 0 10px rgba(255, 110, 40, 0.06);
+    filter: none;
+  }
+}
+
+/* ---- PHASE: fading ---- */
+.ft-phase-fading .ft-char {
+  color: var(--cream, #f6eee1);
+  -webkit-text-fill-color: var(--cream, #f6eee1);
+  animation: ft-fade-out 800ms ease-in forwards;
+}
+
+@keyframes ft-fade-out {
+  0% {
+    color: var(--cream, #f6eee1);
+    -webkit-text-fill-color: var(--cream, #f6eee1);
+    text-shadow:
+      0 0 6px rgba(255, 255, 255, 0.12),
+      0 0 10px rgba(255, 110, 40, 0.06);
+  }
+  100% {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+  }
+}
+
+/* ---- Fire canvas ---- */
+.firetext .ft-fire {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  opacity: 1;
+}
+
+/* Soft variant */
+.firetext-soft .ft-phase-revealed .ft-char {
+  animation-duration: 400ms;
+}
+
+/* Cinder variant */
+.firetext-cinder .ft-phase-revealed .ft-char {
+  animation-name: ft-appear-cinder;
+}
+
+@keyframes ft-appear-cinder {
+  0% {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+      0 0 8px rgba(200, 60, 10, 0.5),
+      0 0 12px rgba(180, 40, 5, 0.3);
+  }
+  50% {
+    color: #e08840;
+    -webkit-text-fill-color: #e08840;
+    text-shadow: 0 0 10px rgba(200, 80, 20, 0.4);
+  }
+  100% {
+    color: var(--cream, #f6eee1);
+    -webkit-text-fill-color: var(--cream, #f6eee1);
+    text-shadow: 0 0 10px rgba(255, 92, 28, 0.12);
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .firetext .ft-char {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    text-shadow: none;
+    animation: none;
+    color: var(--cream, #f6eee1);
+    -webkit-text-fill-color: var(--cream, #f6eee1);
+  }
+  .firetext .ft-fire {
+    display: none;
+  }
+}

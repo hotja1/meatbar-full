@@ -1,0 +1,77 @@
+/*
+ * #9 — Кнопка-тумблер фонового эмбиента.
+ *
+ * Прижата к нижнему-левому углу окна, поверх контента, но НИЖЕ
+ * SideNav-drawer и cart-drawer (z-index 50, у них 100+).
+ * Чёткий focus-ring, aria-pressed-стилизация, prefers-reduced-motion.
+ */
+
+.ambient-toggle {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 50;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px 9px 11px;
+  border: 1px solid rgba(224, 166, 75, 0.32);
+  border-radius: 999px;
+  background: linear-gradient(165deg, rgba(28, 18, 12, 0.86), rgba(12, 8, 5, 0.94));
+  color: rgba(255, 244, 226, 0.84);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45);
+  transition: transform 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ambient-toggle:hover {
+  color: var(--cream, #f6eee1);
+  border-color: rgba(224, 166, 75, 0.6);
+  transform: translateY(-1px);
+}
+
+.ambient-toggle.is-on {
+  color: #fff7e0;
+  border-color: rgba(224, 166, 75, 0.85);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.45), 0 0 18px rgba(224, 166, 75, 0.4);
+  background: linear-gradient(165deg, rgba(60, 36, 18, 0.92), rgba(22, 14, 9, 0.96));
+}
+
+.ambient-toggle:focus-visible {
+  outline: 2px solid var(--gold, #e0a64b);
+  outline-offset: 3px;
+}
+
+.ambient-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ambient-toggle__label {
+  /* Текст спрятан на мобильных, чтобы не занимать место. */
+  display: inline-block;
+}
+
+@media (max-width: 540px) {
+  .ambient-toggle {
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+  .ambient-toggle__label {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ambient-toggle,
+  .ambient-toggle:hover {
+    transform: none;
+    transition: none;
+  }
+}

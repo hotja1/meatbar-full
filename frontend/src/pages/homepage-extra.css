@@ -1,0 +1,340 @@
+/* Extra styles introduced alongside the side-drawer cart, side-nav,
+ * realistic floor map and Perplexity-style cloud hero. */
+
+/* ---- Global typography hardening (no broken hyphenation) ---- */
+h1, h2, h3, h4, .firetext, .chapter, .dish-card h4, .featured-dish h3,
+.section-intro p, .cloud-copy p, .cart-summary-card, .drawer-line-body strong {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+  hyphens: none;
+}
+
+/* ---- Header redesign for drawer-based nav ---- */
+.site-header .header-burger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 244, 226, 0.16);
+  border-radius: 12px;
+  background: rgba(10, 7, 5, 0.4);
+  color: var(--cream, #f6eee1);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.site-header .header-burger:hover {
+  background: rgba(255, 110, 40, 0.18);
+  border-color: rgba(255, 110, 40, 0.45);
+}
+
+.site-header .header-nav-desktop {
+  display: inline-flex;
+  align-items: center;
+  gap: 22px;
+  margin-left: auto;
+  /* Держим одинаковый отступ между «Контакты» и кнопкой телефона,
+     как и между словами в навигации. */
+  margin-right: 22px;
+}
+
+.site-header .header-nav-desktop a {
+  /* relative + isolation дают возможность рисовать «огонёк» под буквами
+     при наведении — без рефлоу и без JS. */
+  position: relative;
+  isolation: isolate;
+  padding: 6px 4px;
+  color: rgba(255, 244, 226, 0.78);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.18s ease, transform 0.18s ease, text-shadow 0.18s ease;
+  text-decoration: none;
+}
+
+.site-header .header-nav-desktop a::before {
+  /* Тёплый «огонёк»-подложка. Гасится по умолчанию (opacity 0)
+     и GPU-переводится в transform/opacity — следовательно дёшевый эффект. */
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  bottom: -4px;
+  width: 90%;
+  height: 18px;
+  transform: translate(-50%, 4px) scale(0.6);
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(255, 236, 151, 0.85) 0%,
+    rgba(255, 128, 43, 0.55) 24%,
+    rgba(228, 22, 39, 0.18) 60%,
+    transparent 80%
+  );
+  filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.site-header .header-nav-desktop a::after {
+  /* Маленький «язычок пламени» (эллипс) вверху букв, разворачивается
+     на наведении и издаёт лёгкое мерцание. */
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: -4px;
+  width: 70%;
+  height: 12px;
+  transform: translate(-50%, 6px) scale(0.5);
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(255, 246, 200, 0.9) 0%,
+    rgba(255, 174, 59, 0.6) 35%,
+    rgba(228, 22, 39, 0.0) 75%,
+    transparent 100%
+  );
+  filter: blur(5px);
+  opacity: 0;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.site-header .header-nav-desktop a:hover,
+.site-header .header-nav-desktop a:focus-visible {
+  color: var(--cream, #f6eee1);
+  transform: translateY(-1px);
+  text-shadow:
+    0 0 6px rgba(255, 196, 102, 0.55),
+    0 0 14px rgba(228, 22, 39, 0.32);
+}
+
+.site-header .header-nav-desktop a:hover::before,
+.site-header .header-nav-desktop a:focus-visible::before {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  animation: navHoverFireBase 1.4s ease-in-out infinite alternate;
+}
+
+.site-header .header-nav-desktop a:hover::after,
+.site-header .header-nav-desktop a:focus-visible::after {
+  opacity: 0.85;
+  transform: translate(-50%, 0) scale(0.95);
+  animation: navHoverFireTip 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes navHoverFireBase {
+  0% { transform: translate(-50%, 0) scale(0.96); }
+  100% { transform: translate(-50%, -1px) scale(1.04); }
+}
+
+@keyframes navHoverFireTip {
+  0% { transform: translate(-50%, 0) scale(0.85); opacity: 0.7; }
+  100% { transform: translate(-50%, -2px) scale(1.05); opacity: 0.95; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header .header-nav-desktop a,
+  .site-header .header-nav-desktop a::before,
+  .site-header .header-nav-desktop a::after {
+    transition: none !important;
+    animation: none !important;
+  }
+  .site-header .header-nav-desktop a:hover {
+    transform: none;
+    text-shadow: none;
+  }
+}
+
+/* На touch-устройствах и low-tier оставляем чистый premium-вариант
+   без blur-огоньков в ховере: визуал сохраняется, лишняя GPU-нагрузка уходит. */
+@media (hover: none), (pointer: coarse) {
+  .site-header .header-nav-desktop a::before,
+  .site-header .header-nav-desktop a::after {
+    display: none;
+  }
+  .site-header .header-nav-desktop a {
+    text-shadow: none;
+    transform: none;
+  }
+}
+
+:root[data-perf='low'] .site-header .header-nav-desktop a::before,
+:root[data-perf='low'] .site-header .header-nav-desktop a::after {
+  display: none;
+}
+
+:root[data-perf='low'] .site-header .header-nav-desktop a {
+  text-shadow: none;
+}
+
+.site-header .header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.site-header .header-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-header .header-cart {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 110, 40, 0.45);
+  border-radius: 999px;
+  background: rgba(255, 110, 40, 0.08);
+  color: var(--cream, #f6eee1);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.site-header .header-cart:hover {
+  background: rgba(255, 110, 40, 0.2);
+  transform: translateY(-1px);
+}
+
+.site-header .header-cart-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.site-header .header-cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef1d2d;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid #0c0907;
+}
+
+@media (max-width: 880px) {
+  .site-header .header-nav-desktop,
+  .site-header .header-call span {
+    display: none;
+  }
+  .site-header .header-nav-desktop {
+    margin-right: 0;
+  }
+  .site-header .header-call {
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 244, 226, 0.16);
+    background: rgba(10, 7, 5, 0.4);
+  }
+  .site-header .header-cart-amount {
+    display: none;
+  }
+  .site-header .header-cart {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 50%;
+  }
+}
+
+/* ---- Cart summary card replacing the inline cart panel ---- */
+.cart-summary-card {
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid rgba(255, 244, 226, 0.1);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(228, 22, 39, 0.18), transparent 50%),
+    linear-gradient(180deg, #15110d 0%, #0c0907 100%);
+  color: var(--cream, #f6eee1);
+}
+
+.cart-summary-head {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.cart-summary-head svg {
+  color: #ffae3b;
+}
+
+.cart-summary-head strong {
+  display: block;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -0.005em;
+}
+
+.cart-summary-head span {
+  display: block;
+  margin-top: 4px;
+  color: rgba(255, 244, 226, 0.62);
+  font-size: 13px;
+}
+
+.cart-summary-text {
+  margin: 0;
+  color: rgba(255, 244, 226, 0.74);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---- Floating cart button removed (Task 1) ----
+ * Дублирующая кнопка корзины снизу убрана: оставлена только
+ * верхняя кнопка корзины в шапке и боковая навигация. */
+
+/* ---- Map-based booking experience ---- */
+.booking-experience-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 980px) {
+  .booking-experience-map {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Mobile CTA bar tweak (replace anchor with button) ---- */
+.mobile-cta-bar button.order {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}

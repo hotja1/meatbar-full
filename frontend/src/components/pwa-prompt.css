@@ -1,0 +1,110 @@
+.pwa-prompt {
+  position: fixed;
+  bottom: 22px;
+  left: 22px;
+  right: 22px;
+  max-width: 420px;
+  z-index: 240;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 110, 40, 0.32);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(228, 22, 39, 0.22), transparent 50%),
+    rgba(15, 11, 8, 0.92);
+  color: var(--cream, #f6eee1);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.56);
+  backdrop-filter: blur(14px);
+  animation: pwa-prompt-in 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pwa-prompt-body {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.pwa-prompt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ef1d2d, #8d0d13);
+  color: #fff;
+}
+
+.pwa-prompt-body strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.005em;
+}
+
+.pwa-prompt-body span {
+  display: block;
+  margin-top: 2px;
+  color: rgba(255, 244, 226, 0.66);
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+
+.pwa-prompt-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffae3b, #ef1d2d);
+  color: #1a0c08;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.pwa-prompt-action:hover {
+  transform: translateY(-1px);
+}
+
+.pwa-prompt-close {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+  color: var(--cream, #f6eee1);
+  cursor: pointer;
+}
+
+.pwa-prompt-close:hover {
+  background: rgba(255, 110, 40, 0.32);
+}
+
+@keyframes pwa-prompt-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .pwa-prompt {
+    bottom: 86px;
+    left: 12px;
+    right: 12px;
+  }
+}

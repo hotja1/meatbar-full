@@ -1,0 +1,149 @@
+:root {
+  color: #f6eee1;
+  background: #120d0a;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --ember: #d81420;
+  --ember-dark: #7f1014;
+  --coal: #120d0a;
+  --coal-soft: #1d1510;
+  --ash: #3a332d;
+  --cream: #f6eee1;
+  --muted: #cbb9a6;
+  --gold: #e0a64b;
+  --green: #5ddd8a;
+  --chalk: #f1eee3;
+  --wood-dark: #181512;
+  --wood-line: rgba(255, 255, 255, 0.045);
+  --radius-xl: 32px;
+  --radius-lg: 22px;
+  --shadow-fire: 0 24px 80px rgba(216, 20, 32, 0.24);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  /* Global body background must stay photo-free: user requested removal
+     of the "meat photo" from the overall page background. */
+  background:
+    radial-gradient(circle at 20% 8%, rgba(197, 25, 20, 0.2), transparent 28rem),
+    radial-gradient(circle at 80% 18%, rgba(224, 166, 75, 0.12), transparent 24rem),
+    linear-gradient(180deg, rgba(11, 7, 5, 0.62), rgba(11, 7, 5, 0.96)),
+    #0b0705;
+}
+
+/* Mobile/iOS: background-attachment: fixed is expensive and causes scroll jank.
+   Keep the same image, but avoid fixed on low-tier/mobile. */
+@media (min-width: 769px) {
+  body {
+    background-attachment: scroll, scroll, scroll, scroll;
+  }
+}
+
+:root[data-perf='low'] body {
+  background-attachment: scroll, scroll, scroll, scroll;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.36;
+  background:
+    radial-gradient(circle at 50% 0%, transparent 0 30%, rgba(8, 5, 3, 0.86) 76%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.72), transparent 45%, rgba(0, 0, 0, 0.72));
+}
+
+/* Low-tier/mobile GPUs: a fixed full-screen overlay can trigger extra
+   compositing work. Keep the design, but drop it on low perf tier. */
+:root[data-perf='low'] body::before {
+  display: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Global typography hardening — keep words whole.
+ * The previous build used overflow-wrap: break-word on h1/h2,
+ * which split rare Russian words mid-letter. */
+h1, h2, h3, h4, h5, h6 {
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
+p, li, dd, span {
+  hyphens: none;
+  -webkit-hyphens: none;
+  overflow-wrap: normal;
+}
+
+::selection {
+  color: var(--cream);
+  background: var(--ember);
+}
+
+/* ------------------------------------------------------------------ */
+/* Perf tier overrides (старые устройства / iOS 15 / save-data). */
+
+:root[data-perf='low'] .floorplan-stage,
+:root[data-perf='low'] .floorplan-tabs,
+:root[data-perf='low'] .drawer,
+:root[data-perf='low'] .cart-drawer,
+:root[data-perf='low'] .booking-dialog,
+:root[data-perf='low'] .pwa-prompt,
+:root[data-perf='low'] .ambient-toggle {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-perf='low'] .floor-svg {
+  /* Keep depth, but avoid expensive filter stack on old GPUs. */
+  filter: none !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Browser perf: skip layout/paint work for deep offscreen sections.
+   Supported in Chromium; no-op elsewhere. */
+
+main > section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px;
+}
+
+main > section.cinema-hero,
+main > section.cloud-hero {
+  content-visibility: visible;
+  contain-intrinsic-size: auto;
+}

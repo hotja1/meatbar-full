@@ -1,0 +1,82 @@
+{
+  "name": "Мясо Бар — гриль-бар Нижневартовск",
+  "short_name": "Мясо Бар",
+  "description": "Меню, бронь столика и заказ блюд из Мясо Бар. Работает офлайн.",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#120d0a",
+  "background_color": "#120d0a",
+  "categories": ["food", "lifestyle", "restaurants"],
+  "icons": [
+    {
+      "src": "/assets/meatbar-logo-mark-square-large-192.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/meatbar-logo-mark-square-large.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/meatbar-logo-mark-square-large.webp",
+      "sizes": "512x512",
+      "type": "image/webp",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/our-interior.webp",
+      "sizes": "1280x720",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Зал ресторана Мясо Бар"
+    },
+    {
+      "src": "/assets/clean-ribs-plate.webp",
+      "sizes": "720x1280",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "Ребра в дыму"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Забронировать столик",
+      "short_name": "Бронь",
+      "url": "/#booking",
+      "description": "Открыть схему зала и выбрать стол",
+      "icons": [{ "src": "/assets/meatbar-logo-mark-square-large-192.webp", "sizes": "192x192" }]
+    },
+    {
+      "name": "Открыть меню",
+      "short_name": "Меню",
+      "url": "/#menu",
+      "description": "Перейти к меню Мясо Бар",
+      "icons": [{ "src": "/assets/meatbar-logo-mark-square-large-192.webp", "sizes": "192x192" }]
+    },
+    {
+      "name": "Собрать заказ",
+      "short_name": "Заказ",
+      "url": "/#order",
+      "description": "Открыть корзину и оформить заказ",
+      "icons": [{ "src": "/assets/meatbar-logo-mark-square-large-192.webp", "sizes": "192x192" }]
+    },
+    {
+      "name": "Позвонить",
+      "short_name": "Звонок",
+      "url": "/#contacts",
+      "description": "Связаться с рестораном",
+      "icons": [{ "src": "/assets/meatbar-logo-mark-square-large-192.webp", "sizes": "192x192" }]
+    }
+  ]
+}

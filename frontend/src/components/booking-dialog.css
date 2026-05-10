@@ -1,0 +1,254 @@
+/* Премиум-диалог брони — открывается из карточек-сцен.
+   Эффекты — в духе сайта: тёплый тёмный фон, золото и огонь. */
+
+.booking-dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--cream);
+  max-width: min(1180px, 96vw);
+  width: 100%;
+  max-height: 94vh;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  position: fixed;
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.booking-dialog::backdrop {
+  background: rgba(8, 4, 2, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.booking-dialog__backdrop {
+  display: none;
+}
+
+.booking-dialog__shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  background:
+    linear-gradient(165deg, rgba(28, 18, 12, 0.96), rgba(14, 9, 6, 0.98));
+  border: 1px solid rgba(224, 166, 75, 0.28);
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+.booking-dialog__close {
+  position: absolute;
+  inset: 14px 14px auto auto;
+  z-index: 5;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(18, 13, 10, 0.7);
+  color: var(--cream);
+  cursor: pointer;
+  transition: transform 200ms ease, border-color 200ms ease;
+}
+
+.booking-dialog__close:hover {
+  transform: rotate(90deg);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.booking-dialog__media {
+  position: relative;
+  min-height: 360px;
+  background: #0d0805;
+  isolation: isolate;
+}
+
+/* Фото занимает всю медиа-область. */
+.booking-dialog__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.booking-dialog__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.booking-dialog__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.78) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.4), transparent 55%);
+}
+
+.booking-dialog__media-overlay {
+  position: absolute;
+  inset: auto 24px 24px 24px;
+  z-index: 4;
+  display: grid;
+  gap: 6px;
+  color: var(--cream);
+}
+
+.booking-dialog__kicker {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.booking-dialog__title {
+  margin: 0;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: -0.01em;
+}
+
+.booking-dialog__desc {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(246, 238, 225, 0.82);
+  max-width: 36ch;
+}
+
+.booking-dialog__seats {
+  align-self: start;
+  margin-top: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--coal);
+  background: linear-gradient(135deg, var(--gold), #f3c478);
+}
+
+.booking-dialog__form {
+  display: grid;
+  gap: 12px;
+  padding: 28px 26px 30px;
+  align-content: start;
+}
+
+.booking-dialog__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.booking-dialog__field {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(246, 238, 225, 0.7);
+}
+
+.booking-dialog__field input {
+  border: 1px solid rgba(224, 166, 75, 0.22);
+  background: rgba(18, 13, 10, 0.6);
+  color: var(--cream);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.booking-dialog__field textarea {
+  border: 1px solid rgba(224, 166, 75, 0.22);
+  background: rgba(18, 13, 10, 0.6);
+  color: var(--cream);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0;
+  text-transform: none;
+  resize: vertical;
+  min-height: 84px;
+}
+
+.booking-dialog__field input:focus,
+.booking-dialog__field textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(224, 166, 75, 0.22);
+}
+
+.booking-dialog__success {
+  margin: 4px 0 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(93, 221, 138, 0.12);
+  color: var(--green);
+  font-size: 14px;
+}
+
+.booking-dialog__submit {
+  position: relative;
+  border-color: rgba(224, 166, 75, 0.62);
+  background:
+    linear-gradient(110deg, rgba(224, 166, 75, 0.2), rgba(228, 22, 39, 0.18)),
+    linear-gradient(100deg, rgba(228, 22, 39, 0.92), rgba(228, 22, 39, 0.92));
+  background-size: 100% 100%, 0 100%;
+  background-repeat: no-repeat;
+  background-position: 0 0, 100% 0;
+  transition:
+    background-size 240ms ease,
+    background-position 240ms ease,
+    border-color 220ms ease,
+    color 220ms ease;
+}
+
+.booking-dialog__submit:hover,
+.booking-dialog__submit:focus-visible {
+  color: #fff7ec;
+  border-color: rgba(224, 166, 75, 0.95);
+  background-size: 100% 100%, 100% 100%;
+  background-position: 0 0, 0 0;
+}
+
+@media (max-width: 880px) {
+  .booking-dialog__shell {
+    grid-template-columns: 1fr;
+  }
+  .booking-dialog__media {
+    min-height: 220px;
+    aspect-ratio: 16 / 9;
+  }
+}
+
+@media (max-width: 540px) {
+  .booking-dialog__row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .booking-dialog__row .booking-dialog__field:first-child {
+    grid-column: span 2;
+  }
+  .booking-dialog__form {
+    padding: 22px 18px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-dialog__close {
+    transition: none;
+  }
+}
