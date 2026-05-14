@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { HomePage } from './pages/HomePage'
 import { CartProvider } from './lib/CartContext'
 import { installGlobalButtonFire } from './lib/buttonFire'
@@ -103,6 +104,7 @@ export default function App() {
           />
         </Routes>
       </CartProvider>
+      <SpeedInsights />
     </BrowserRouter>
   )
 }
