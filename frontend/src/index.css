@@ -68,8 +68,10 @@ body::before {
 }
 
 /* Low-tier/mobile GPUs: a fixed full-screen overlay can trigger extra
-   compositing work. Keep the design, but drop it on low perf tier. */
-:root[data-perf='low'] body::before {
+   compositing work. Keep the design, but drop it on low perf tier.
+   P3.10: also drop on mid-tier — saves a compositor layer on mobile. */
+:root[data-perf='low'] body::before,
+:root[data-perf='mid'] body::before {
   display: none;
 }
 
@@ -133,6 +135,19 @@ p, li, dd, span {
   filter: none !important;
 }
 
+/* Low-tier: reduce expensive shadows and filters on scroll elements */
+:root[data-perf='low'] .culture-tile {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+:root[data-perf='low'] .venue-slider__img {
+  filter: none !important;
+}
+
+:root[data-perf='low'] .cinema-hero::after {
+  animation: none !important;
+}
+
 /* ------------------------------------------------------------------ */
 /* Browser perf: skip layout/paint work for deep offscreen sections.
    Supported in Chromium; no-op elsewhere. */
@@ -142,8 +157,46 @@ main > section {
   contain-intrinsic-size: 1000px;
 }
 
+/* Sticky-секции нельзя скрывать через content-visibility */
+main > section.order-section--reel {
+  content-visibility: visible;
+  contain-intrinsic-size: none;
+}
+
 main > section.cinema-hero,
 main > section.cloud-hero {
   content-visibility: visible;
   contain-intrinsic-size: auto;
+}
+
+/* ================================================================== */
+/* Mobile / Touch improvements (2026-05-11)                           */
+/* ================================================================== */
+
+/* #10 — Remove default tap highlight, use custom :active states */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* #14 — Prevent background scroll behind modals/drawers */
+.booking-dialog-overlay,
+.cart-drawer,
+.drawer {
+  overscroll-behavior: contain;
+}
+
+/* #5 — Mobile CTA bar: disable backdrop-filter on low-tier */
+:root[data-perf='low'] .mobile-cta-bar {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(15, 11, 8, 0.96);
+}
+
+/* #9 — Additional backdrop-filter overrides for mid/low tier */
+:root[data-perf='low'] .cloud-copy,
+:root[data-perf='low'] .cloud-stats,
+:root[data-perf='low'] .mobile-cta-bar,
+:root[data-perf='low'] .site-header {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }

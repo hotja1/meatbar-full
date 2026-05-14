@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { barMenu as fallbackBarMenu, type BarCategory, type BarItem } from '../data/bar'
+import { FireButton } from './FireButton'
 import { FireText } from './FireText'
 import './bar-menu.css'
 import { detectPerfTier } from '../lib/perfTier'
@@ -228,18 +229,19 @@ export function BarMenuSection({ categories }: BarMenuSectionProps) {
           {source.map((cat) => {
             const isActive = cat.slug === activeSlug
             return (
-              <button
+              <FireButton
                 key={cat.slug}
-                type="button"
+                variant={isActive ? 'outline' : 'ghost'}
+                glow={isActive}
                 role="tab"
                 aria-selected={isActive}
                 aria-controls={`bar-panel-${cat.slug}`}
                 id={`bar-tab-${cat.slug}`}
-                className={`bar-tab ${isActive ? 'is-active' : ''}`}
+                className="bar-tab-btn"
                 onClick={() => setActiveSlug(cat.slug)}
               >
                 {cat.name}
-              </button>
+              </FireButton>
             )
           })}
         </div>

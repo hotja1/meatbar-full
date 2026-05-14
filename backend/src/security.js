@@ -16,6 +16,10 @@ export const loginLimiter = limiter({ max: 5 })
 export const bookingLimiter = limiter({ max: 10 })
 export const orderLimiter = limiter({ max: 20 })
 export const smsLimiter = limiter({ max: 20 })
+/* Task E28 — защита от флуда телеметрии. 120 событий/IP/10 минут
+   с запасом на reflows/INP всплески при скролле, но отсекает
+   автоматические штормы. 204 остаётся, сообщение не рендерится. */
+export const rumLimiter = limiter({ max: 120 })
 
 function normalizeOrigins(raw) {
   return String(raw || '')

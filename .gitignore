@@ -26,5 +26,9 @@ Thumbs.db
 coverage/
 *.tsbuildinfo
 
+backend/data/*.sqlite
 backend/data/*.sqlite-shm
 backend/data/*.sqlite-wal
+
+# Папка с оригиналами фото (258 MB) — не коммитим
+menu+/

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import CreditCard from 'lucide-react/dist/esm/icons/credit-card.js'
 import Minus from 'lucide-react/dist/esm/icons/minus.js'
 import Plus from 'lucide-react/dist/esm/icons/plus.js'
@@ -128,6 +129,9 @@ export function CartDrawer({
               <ShoppingBag size={36} />
               <strong>Корзина пуста</strong>
               <p>Добавьте блюдо из меню — здесь оно сразу появится. Можно править количество и сразу оформить.</p>
+              <Link to="/menu" className="secondary-link" onClick={onClose}>
+                Перейти в меню →
+              </Link>
             </div>
           )}
         </div>

@@ -57,23 +57,62 @@
 }
 
 .pwa-prompt-action {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 10px 16px;
-  border: 0;
+  border: 1px solid rgba(255, 130, 60, 0.5);
   border-radius: 999px;
-  background: linear-gradient(135deg, #ffae3b, #ef1d2d);
-  color: #1a0c08;
+  color: #f2e6d4;
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: transform 0.2s ease;
+  overflow: hidden;
+  isolation: isolate;
+  background: transparent;
+  filter: drop-shadow(0 0 14px rgba(216, 20, 32, 0.45));
+  transition: transform 0.18s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
-.pwa-prompt-action:hover {
+.pwa-prompt-action::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 100%, rgba(255, 220, 120, 0.55), transparent 60%),
+    radial-gradient(circle at 70% 110%, rgba(255, 110, 30, 0.55), transparent 65%);
+  opacity: 0.18;
+  animation: fire-flicker 2.4s infinite ease-in-out;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.pwa-prompt-action::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(255, 200, 120, 0.7), rgba(216, 20, 32, 0.0));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pwa-prompt-action:hover,
+.pwa-prompt-action:focus-visible {
   transform: translateY(-1px);
+  border-color: rgba(255, 130, 60, 1);
+  background: rgba(255, 130, 60, 0.1);
+  filter: drop-shadow(0 0 22px rgba(216, 20, 32, 0.65));
+}
+
+.pwa-prompt-action:hover::before {
+  opacity: 0.6;
 }
 
 .pwa-prompt-close {

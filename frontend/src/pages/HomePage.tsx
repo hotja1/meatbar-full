@@ -1,137 +1,46 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
+﻿import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right.js'
 import Clock from 'lucide-react/dist/esm/icons/clock.js'
-import Flame from 'lucide-react/dist/esm/icons/flame.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
 import MenuIcon from 'lucide-react/dist/esm/icons/menu.js'
-import Minus from 'lucide-react/dist/esm/icons/minus.js'
 import Phone from 'lucide-react/dist/esm/icons/phone.js'
-import Plus from 'lucide-react/dist/esm/icons/plus.js'
 import ShoppingBag from 'lucide-react/dist/esm/icons/shopping-bag.js'
+import Sofa from 'lucide-react/dist/esm/icons/sofa.js'
+import ChefHat from 'lucide-react/dist/esm/icons/chef-hat.js'
+import GlassWater from 'lucide-react/dist/esm/icons/glass-water.js'
+import CalendarCheck from 'lucide-react/dist/esm/icons/calendar-check.js'
+import Coffee from 'lucide-react/dist/esm/icons/coffee.js'
+import Briefcase from 'lucide-react/dist/esm/icons/briefcase.js'
+import Navigation from 'lucide-react/dist/esm/icons/navigation.js'
+import PhoneCall from 'lucide-react/dist/esm/icons/phone-call.js'
 import type { MenuCategory } from '../data/menu'
-/* Bar-меню — отдельный chunk; не нужен для FCP/LCP, поэтому
-   ленивым импортом сразу попадает в свой бандл (Phase 9.D). */
-const BarMenuSection = lazy(() =>
-  import('../components/BarMenuSection').then((m) => ({ default: m.BarMenuSection })),
-)
 import { FireButton } from '../components/FireButton'
 import { FireText } from '../components/FireText'
 import { RotatingFireText } from '../components/RotatingFireText'
 import { CloudHero } from '../components/CloudHero'
 import type { CartDrawerItem } from '../components/CartDrawer'
-import { SideNav } from '../components/SideNav'
+import { FloatingDock } from '../components/FloatingDock'
 import { PWAInstallPrompt } from '../components/PWAInstallPrompt'
 import { AmbientAudio } from '../components/AmbientAudio'
 import { AnimatedFire } from '../components/AnimatedFire'
 import { EmberField } from '../components/EmberField'
 
 const CartDrawer = lazy(() => import('../components/CartDrawer').then((m) => ({ default: m.CartDrawer })))
-import { realisticTables } from '../data/tables-layout'
-import type { MapTable } from '../components/TableMap'
-const TableMap = lazy(() => import('../components/TableMap').then((m) => ({ default: m.TableMap })))
-const BookingDialog = lazy(() =>
-  import('../components/BookingDialog').then((m) => ({ default: m.BookingDialog })),
-)
-import { useRealtimeTables } from '../hooks/useRealtimeTables'
+const Picture = lazy(() => import('../components/Picture'))
 import { useParallaxPhotos } from '../hooks/useParallaxPhotos'
 import { useSubtitleReveal } from '../hooks/useSubtitleReveal'
 import { api } from '../lib/api'
-import type { RestaurantTable } from '../lib/types'
 import { detectPerfTier } from '../lib/perfTier'
-import { isWebp, toAvif, toSmAvif, toSmWebp } from '../lib/imageSources'
+import { isWebp, toAvif } from '../lib/imageSources'
 import { trackEvent } from '../lib/analytics'
 import '../App.css'
 import './homepage-extra.css'
 
-type Table = RestaurantTable
-
-type Booking = {
-  table: string
-  tableId?: number
-  guests: number
-  date: string
-  time: string
-  name: string
-  phone: string
-  comment: string
-}
-
 type CartItem = CartDrawerItem
 
-// Realistic floor layout — used both for the visual map and the
-// fallback when the backend hasn't returned table data yet.
-const fallbackTables: Table[] = realisticTables.map((table) => ({
-  id: table.id,
-  title: `Стол №${table.number}`,
-  zone: table.zone,
-  seats: table.seats,
-  status: table.status,
-  x: table.x,
-  y: table.y,
-  scene: table.scene ?? '',
-  hall: table.hall,
-  number: table.number,
-  width: table.width,
-  height: table.height,
-  shape: table.shape,
-}))
-
-const tablesByNumber = new Map(realisticTables.map((table) => [table.number, table]))
-const tablesById = new Map(realisticTables.map((table) => [table.id, table]))
-
-/**
- * #11 — «Мой выбор». Помним ид выбранного стола в localStorage,
- * чтобы при возврате на сайт поднять тот же вариант. Админка
- * про этот ключ НЕ знает — 100% клиентская память.
- */
-const MY_TABLE_KEY = 'meatbar:my-table'
-
-/**
- * Phase 12 fix #2 + Phase 13 fix — клик по «Бронь» должен жёстко
- * приземлиться на `<section id="booking">`.
- *
- * Раньше, когда мы полагались только на `href="#booking"` или
- * `scrollIntoView({block:'start'})`, в части браузеров пользователь
- * оказывался на секции «Соберите заказ» (она лежит выше брони).
- * Причины две:
- *  - смузи-скролл прерывался intersection-observer-ами на пути;
- *  - 96px sticky-header перекрывал заголовок booking-секции.
- *
- * Phase 13 фикс: к моменту первого клика «Бронь» лениво-загружаемая
- * секция `BarMenuSection` (между #order и #booking) могла ещё не
- * приехать. Пока шёл smooth-scroll, чанк догружался, верхняя часть
- * страницы росла → реальная позиция #booking уезжала вниз и
- * пользователь приземлялся на «Соберите заказ».
- *
- * Решение:
- *  1) Триггерим `import('../components/BarMenuSection')` ещё до
- *     старта скролла (этот же чанк используется в JSX, поэтому
- *     повторных запросов не будет — браузер заберёт уже готовый
- *     модуль из памяти).
- *  2) Считаем `top + scrollY - HEADER_OFFSET` сами и
- *     `window.scrollTo` с явной координатой.
- *  3) После окончания smooth-скролла дополнительно «settle» —
- *     ещё несколько раз пересчитываем позицию (чанк / lazy-images
- *     к этому моменту обычно уже разложились) и при необходимости
- *     дотягиваем точно к #booking. Если пользователь начал крутить
- *     сам — settle прерывается.
- *  4) `scroll-margin-top: 96px` на #booking страхует и хеш-навигацию.
- */
-const HEADER_OFFSET = 96
 const MENU_CACHE_KEY = 'meatbar:menu-cache'
-
-function runIdle(task: () => void, timeout = 1400) {
-  if (typeof window === 'undefined') return
-  const ric = (window as Window & {
-    requestIdleCallback?: (callback: IdleRequestCallback, options?: IdleRequestOptions) => number
-  }).requestIdleCallback
-  if (typeof ric === 'function') {
-    ric(() => task(), { timeout })
-    return
-  }
-  window.setTimeout(task, 32)
-}
 
 function readMenuCache(): MenuCategory[] {
   if (typeof window === 'undefined') return []
@@ -160,124 +69,6 @@ function writeMenuCache(menu: MenuCategory[]) {
     window.localStorage.setItem(MENU_CACHE_KEY, JSON.stringify(menu))
   } catch {
     /* ignore localStorage quota/private mode */
-  }
-}
-
-function preloadBookingChunks() {
-  /* Затягиваем оба ленивых чанка между #order и #booking, чтобы к
-     моменту приземления курсора их размер уже был учтён в layout. */
-  const bar = import('../components/BarMenuSection').catch(() => null)
-  // Warm up booking UI chunks too (TableMap + BookingDialog) so the
-  // floorplan opens without an extra network roundtrip.
-  void import('../components/TableMap').catch(() => null)
-  void import('../components/BookingDialog').catch(() => null)
-  return bar
-}
-
-function scrollToBooking(event?: ReactMouseEvent<HTMLElement>) {
-  if (typeof document === 'undefined') return
-  const target = document.getElementById('booking')
-  if (!target) return
-  if (event) event.preventDefault()
-  const preload = preloadBookingChunks()
-
-  const reduced =
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-  const goTo = (smooth: boolean) => {
-    const top = target.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET
-    window.scrollTo({
-      top: Math.max(0, top),
-      behavior: smooth && !reduced ? 'smooth' : 'auto',
-    })
-  }
-
-  // Force-stable behavior: always land on booking, never on order.
-  // We do immediate jump + several layout-shift corrections.
-  void (async () => {
-    try {
-      await Promise.race([
-        preload,
-        new Promise((r) => window.setTimeout(r, 300)),
-      ])
-    } catch {
-      /* noop */
-    }
-    await new Promise<void>((r) => window.requestAnimationFrame(() => r()))
-    goTo(false)
-
-    const stops = [80, 180, 320, 520, 760, 980]
-    stops.forEach((delay) => {
-      window.setTimeout(() => {
-        const off = target.getBoundingClientRect().top - HEADER_OFFSET
-        if (Math.abs(off) > 6) goTo(false)
-      }, delay)
-    })
-
-    if (typeof history !== 'undefined' && typeof history.replaceState === 'function') {
-      history.replaceState(null, '', '#booking')
-    }
-  })()
-}
-
-function readMyTableId(): number | null {
-  if (typeof window === 'undefined') return null
-  try {
-    const raw = window.localStorage.getItem(MY_TABLE_KEY)
-    if (!raw) return null
-    const parsed = Number.parseInt(raw, 10)
-    return Number.isFinite(parsed) ? parsed : null
-  } catch {
-    return null
-  }
-}
-
-function writeMyTableId(id: number) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(MY_TABLE_KEY, String(id))
-  } catch {
-    /* localStorage может быть недоступен в приват-режиме — игнорируем. */
-  }
-}
-
-function normalizeTable(table: RestaurantTable): Table | null {
-  const mapTable = tablesByNumber.get(table.number ?? table.id) ?? tablesById.get(table.id)
-  if (!mapTable) {
-    const number = table.number ?? table.id
-    return {
-      id: table.id,
-      title: table.title?.startsWith('Стол №') ? table.title : `Стол №${number}`,
-      zone: table.zone,
-      seats: table.seats,
-      status: table.status,
-      x: table.x,
-      y: table.y,
-      scene: table.scene ?? '',
-      hall: table.hall ?? (number <= 21 ? 1 : 2),
-      number,
-      width: table.width,
-      height: table.height,
-      shape: table.shape,
-      notes: table.notes,
-    }
-  }
-  return {
-    id: table.id,
-    title: table.title?.startsWith('Стол №') ? table.title : `Стол №${mapTable.number}`,
-    zone: mapTable.zone,
-    seats: mapTable.seats,
-    status: table.status ?? mapTable.status,
-    x: mapTable.x,
-    y: mapTable.y,
-    scene: mapTable.scene ?? table.scene ?? '',
-    hall: mapTable.hall,
-    number: mapTable.number,
-    width: mapTable.width,
-    height: mapTable.height,
-    shape: mapTable.shape,
-    notes: table.notes,
   }
 }
 
@@ -340,56 +131,17 @@ const cultures = [
    (см. galleryFromMenu в HomePage). Старый фиксированный список
    убран в Task 9b. */
 
-const featuredItems = [
-  'Брискет с пюре',
-  'BBQ',
-  'Томлёная рулька',
-  'Цезарь с креветками',
-  'С тунцом, печёными цуккини и имбирной заправкой',
-  'Стейк из свинины',
-]
-
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('ru-RU').format(price)
-}
-
 export function HomePage() {
+  const navigate = useNavigate()
   const [menu, setMenu] = useState<MenuCategory[]>(() => readMenuCache())
-  const [tables, setTables] = useState<Table[]>(fallbackTables)
-  // mobileOpen state replaced by `navOpen` (SideNav drawer)
-  const [activeCategory, setActiveCategory] = useState<string>(() => readMenuCache()[0]?.name ?? '')
-  const [selectedTable, setSelectedTable] = useState<Table>(() => {
-    // #11 — восстанавливаем «мой выбор» из localStorage,
-    // если сохранённый стол ещё есть в fallback-данных.
-    const savedId = readMyTableId()
-    if (savedId != null) {
-      const saved = fallbackTables.find((t) => t.id === savedId)
-      if (saved) return saved
-    }
-    return fallbackTables[0]
-  })
-  const [booking, setBooking] = useState<Booking>({
-    table: fallbackTables[0].title,
-    tableId: fallbackTables[0].id,
-    guests: 2,
-    date: '',
-    time: '',
-    name: '',
-    phone: '',
-    comment: '',
-  })
-  const [bookingState, setBookingState] = useState<'idle' | 'sent'>('idle')
-  const [bookingOpen, setBookingOpen] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
   const [orderPhone, setOrderPhone] = useState('')
   const [orderState, setOrderState] = useState<'idle' | 'needs-phone' | 'sent'>('idle')
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null)
-  const [cartNotice, setCartNotice] = useState('')
+  const [cartNotice] = useState('')
   const [introDone, setIntroDone] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
-  const bookingSectionRef = useRef<HTMLElement | null>(null)
-  const [bookingSectionNear, setBookingSectionNear] = useState(false)
   const gallerySectionRef = useRef<HTMLElement | null>(null)
   const [gallerySectionNear, setGallerySectionNear] = useState(false)
 
@@ -398,31 +150,46 @@ export function HomePage() {
     return () => window.clearTimeout(timer)
   }, [])
 
+  /* При загрузке страницы с hash (например /#contacts из другой страницы)
+     скроллим к нужному элементу после рендера. */
   useEffect(() => {
-    const conn = (navigator as Navigator & {
-      connection?: { saveData?: boolean; effectiveType?: string }
-    }).connection
-    const saveData = Boolean(conn?.saveData)
-    const verySlowNetwork = /(?:^|[^4-9])2g/i.test(conn?.effectiveType ?? '')
-    if (detectPerfTier() === 'low' || saveData || verySlowNetwork) return
-    runIdle(() => {
-      preloadBookingChunks()
-    }, 2200)
+    const hash = window.location.hash
+    if (!hash) return
+    const scrollToHash = () => {
+      const el = document.querySelector(hash)
+      if (el) {
+        ;(window as unknown as Record<string, unknown>).__navScrolling = true
+        el.scrollIntoView({ behavior: 'instant', block: 'start' })
+        setTimeout(() => { (window as unknown as Record<string, unknown>).__navScrolling = false }, 500)
+      }
+    }
+    // Даём время на рендер lazy-секций
+    const t = setTimeout(scrollToHash, 300)
+    return () => clearTimeout(t)
   }, [])
 
-  // Heavy floorplan SVG should run only near the booking section.
+  /* Обход wheel-hijack при клике по якорным ссылкам навигации.
+     Устанавливаем флаг на 2 секунды, чтобы скролл к #contacts
+     не блокировался секцией #order. Также делаем программный
+     scrollIntoView для надёжности. */
   useEffect(() => {
-    const el = bookingSectionRef.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      (entries) => {
-        const visible = entries[0]?.isIntersecting ?? false
-        setBookingSectionNear((prev) => (prev === visible ? prev : visible))
-      },
-      { root: null, rootMargin: '35% 0px 35% 0px', threshold: 0 },
-    )
-    io.observe(el)
-    return () => io.disconnect()
+    const onClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement).closest('a[href^="#"]') as HTMLAnchorElement | null
+      if (!anchor) return
+      const hash = anchor.getAttribute('href')
+      if (!hash || hash === '#') return
+      const target = document.querySelector(hash)
+      if (!target) return
+      e.preventDefault()
+      ;(window as unknown as Record<string, unknown>).__navScrolling = true
+      // Мгновенный прыжок — smooth может застрять на wheel-hijack секции
+      target.scrollIntoView({ behavior: 'instant', block: 'start' })
+      // Обновляем hash в URL без прыжка
+      window.history.pushState(null, '', hash)
+      setTimeout(() => { (window as unknown as Record<string, unknown>).__navScrolling = false }, 500)
+    }
+    document.addEventListener('click', onClick, { capture: true })
+    return () => document.removeEventListener('click', onClick, { capture: true })
   }, [])
 
   // Infinite gallery animation should run only when its section is nearby.
@@ -440,7 +207,6 @@ export function HomePage() {
     return () => io.disconnect()
   }, [])
 
-  useRealtimeTables(setTables)
   /* Task 10: «живые» фото на скролле — single rAF, IO-throttled. */
   useParallaxPhotos('.parallax-photo')
   /* iter3: subtitle slide-in — все параграфы под FireText въезжают слева/справа. */
@@ -455,69 +221,26 @@ export function HomePage() {
           const next = m as MenuCategory[]
           if (!mounted) return
           setMenu(next)
-          setActiveCategory(next[0].name)
           writeMenuCache(next)
         }
       })
       .catch(async () => {
-        // Keep fallback-first behavior without forcing heavy local data
-        // into the initial bundle.
         if (menu.length) return
         try {
           const mod = await import('../data/menu')
           if (!mounted || !mod.menu.length) return
           setMenu(mod.menu)
-          setActiveCategory(mod.menu[0].name)
           writeMenuCache(mod.menu)
         } catch {
           /* noop */
         }
       })
-    api
-      .getTables()
-      .then((t) => {
-        if (Array.isArray(t) && t.length) {
-          const normalized = t.map(normalizeTable).filter((table): table is Table => table !== null)
-          if (!normalized.length) return
-          setTables(normalized)
-          // #11 — если в localStorage есть «мой стол» и он свободен
-          // — поднимаем его, иначе берём первый свободный.
-          const savedId = readMyTableId()
-          const savedTable = savedId != null
-            ? normalized.find((table) => table.id === savedId && table.status !== 'reserved')
-            : null
-          const firstFree = savedTable ?? normalized.find((table) => table.status === 'free') ?? normalized[0]
-          setSelectedTable(firstFree)
-          setBooking((current) => ({
-            ...current,
-            table: firstFree.title,
-            tableId: firstFree.id,
-          }))
-        }
-      })
-      .catch(() => {})
     return () => {
       mounted = false
     }
   }, [menu.length])
 
-  const category = useMemo<MenuCategory | null>(
-    () => menu.find((item) => item.name === activeCategory) ?? menu[0] ?? null,
-    [activeCategory, menu],
-  )
-  const visibleMenuCount = useMemo(
-    () => menu.reduce((sum, item) => sum + item.items.length, 0),
-    [menu],
-  )
-  const featuredMenu = useMemo(
-    () =>
-      menu
-        .flatMap((menuCategory) => menuCategory.items.map((item) => ({ ...item, category: menuCategory.name })))
-        .filter((item) => featuredItems.includes(item.title))
-        .slice(0, 6),
-    [menu],
-  )
-  /* Дорожка фото под бронированием (Task 9b): берём ВСЕ позиции
+  /* Дорожка фото под бронированием (Task 9b): берём ВСЕ позиции под бронированием (Task 9b): берём ВСЕ позиции
      меню, в которых задана картинка, без дублей. Это автоматически
      обновляется при добавлении новых блюд в menu.ts. */
   const galleryFromMenu = useMemo(() => {
@@ -534,28 +257,15 @@ export function HomePage() {
     return out
   }, [menu])
   const galleryLoopItems = useMemo(
-    () => [...galleryFromMenu, ...galleryFromMenu],
+    () => {
+      // C9: Ограничиваем до 20 уникальных фото × 2 = 40 DOM-элементов
+      // вместо 70+ × 2 = 140. Визуально лента выглядит так же.
+      const limited = galleryFromMenu.slice(0, 20)
+      return [...limited, ...limited]
+    },
     [galleryFromMenu],
   )
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + item.price * item.quantity, 0), [cart])
-  const cartByTitle = useMemo(() => {
-    const map = new Map<string, number>()
-    for (const item of cart) map.set(item.title, item.quantity)
-    return map
-  }, [cart])
-
-  const addToCart = (title: string, price: number, itemId?: number, image?: string) => {
-    setCart((current) => {
-      const existing = current.find((item) => item.title === title)
-      if (existing) {
-        return current.map((item) => (item.title === title ? { ...item, quantity: item.quantity + 1 } : item))
-      }
-      return [...current, { itemId, title, price, quantity: 1, image }]
-    })
-    setCartNotice(`${title} · в заказе`)
-    window.setTimeout(() => setCartNotice(''), 1800)
-    setOrderState('idle')
-  }
 
   const removeFromCart = (title: string) => {
     setCart((current) => current.filter((item) => item.title !== title))
@@ -608,81 +318,10 @@ export function HomePage() {
     }
   }
 
-  const chooseTable = (table: Table) => {
-    if (table.status === 'reserved') {
-      return
-    }
-    setSelectedTable(table)
-    // #11 — фиксируем выбор в localStorage. Бэкенду это ничего
-    // не говорит и не бронирует стол — это исключительно «моя память».
-    writeMyTableId(table.id)
-    setBooking((current) => ({
-      ...current,
-      table: table.title,
-      tableId: table.id,
-      guests: Math.min(current.guests, table.seats),
-    }))
-    setBookingState('idle')
-  }
-
-  // mapped для SVG TableMap (нужны hall/x/y/width/height/shape)
-  const mappedTables = useMemo<MapTable[]>(() => {
-    return (tables as Array<Table & { id: number }>).map((t) => {
-      const rt = realisticTables.find(
-        (r) => r.number === ((t as { number?: number }).number ?? t.id),
-      )
-      return {
-        id: t.id,
-        number: (t as { number?: number }).number ?? t.id,
-        hall:
-          (rt?.hall ??
-            (t as { hall?: 1 | 2 | 3 }).hall ??
-            (((t as { number?: number }).number ?? t.id) <= 7
-              ? 1
-              : ((t as { number?: number }).number ?? t.id) <= 21
-                ? 2
-                : 3)) as 1 | 2 | 3,
-        zone: rt?.zone ?? t.zone,
-        seats: rt?.seats ?? t.seats,
-        status: rt?.status ?? t.status,
-        x: rt?.x ?? t.x,
-        y: rt?.y ?? t.y,
-        width: rt?.width ?? t.width ?? 70,
-        height: rt?.height ?? t.height ?? 60,
-        shape: (rt?.shape ?? t.shape ?? 'rect') as 'rect' | 'round',
-        scene: rt?.scene ?? t.scene,
-      }
-    })
-  }, [tables])
-
-  const submitBooking = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!booking.name || !booking.phone || !booking.date || !booking.time) {
-      trackEvent('booking_submit_invalid', { table_id: selectedTable.id, guests: booking.guests })
-      return
-    }
-    try {
-      await api.createBooking({
-        table: selectedTable.title,
-        tableId: selectedTable.id,
-        guests: booking.guests,
-        date: booking.date,
-        time: booking.time,
-        name: booking.name,
-        phone: booking.phone,
-        comment: booking.comment.trim() || undefined,
-      })
-      setBookingState('sent')
-      trackEvent('booking_submit_success', { table_id: selectedTable.id, guests: booking.guests })
-    } catch {
-      setBookingState('sent')
-      trackEvent('booking_submit_failed', { table_id: selectedTable.id, guests: booking.guests })
-    }
-  }
-
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
+    <>
     <main>
       {!introDone ? <IntroOverlay /> : null}
       <Header
@@ -724,14 +363,14 @@ export function HomePage() {
             хочется растянуть. Выберите столик и приходите — остальное мы возьмём на себя.
           </p>
           <div className="hero-actions">
-            <FireButton onClick={() => scrollToBooking()}>
+            <FireButton variant="outline" onClick={() => navigate('/booking')}>
               Выбрать столик <ChevronRight size={18} />
             </FireButton>
             <FireButton variant="outline" onClick={() => (window.location.hash = '#menu')}>
               Открыть меню
             </FireButton>
             <FireButton variant="ghost" onClick={() => setCartOpen(true)}>
-              Собрать заказ
+              Доставка
             </FireButton>
           </div>
         </div>
@@ -820,18 +459,18 @@ export function HomePage() {
       <section className="split-story section-with-bg" data-bg="3">
         <div className="section-bg" aria-hidden="true" />
         <div className="split-panel sticky-panel">
-          <span className="chapter">Мясо Бар</span>
-          <FireText as="h2" intensity="strong" stagger={28}>Жарим и коптим — каждый день под ваш вечер.</FireText>
+          <span className="chapter">Голос гостей</span>
+          <FireText as="h2" intensity="strong" stagger={28}>Тёплый зал, к которому возвращаются.</FireText>
           <p className="subtitle-reveal">
-            Каждое блюдо здесь — приглашение в зал. Садитесь у огня, берите рёбра в дыму
-            и оставайтесь на вечер — или берите с собой, если спешите.
+            Больше 700 положительных отзывов, рейтинг 4.7 на 2ГИС и премия
+            «2ГИС 2025» — лучший ресторан Нижневартовска по выбору гостей.
+            Это про живой зал, дым на углях и вечера, ради которых сюда приходят
+            снова.
           </p>
         </div>
         <div className="split-panel image-panel">
-          {/* iter5: логотип и фото — оба «живые». Логотип не уезжает
-              из контейнера (object-fit:contain + clamp transforms), а
-              фото внутри parallax-photo получает дополнительный 3D-tilt
-              как у баркарт. */}
+          {/* iter5: логотип «живой» — сохраняется как было.
+              Правая колонка теперь — оболочка для отзывов 2ГИС. */}
           <div
             className="split-live-logo"
             onPointerMove={(e) => {
@@ -859,38 +498,9 @@ export function HomePage() {
             </picture>
             <span className="split-live-logo-glow" aria-hidden="true" />
           </div>
-          <div
-            className="split-live-photo parallax-photo"
-            onPointerMove={(e) => {
-              const target = e.currentTarget
-              const r = target.getBoundingClientRect()
-              const bx = ((e.clientX - r.left) / r.width - 0.5) * 2
-              const by = ((e.clientY - r.top) / r.height - 0.5) * 2
-              target.style.setProperty('--bx', String(bx))
-              target.style.setProperty('--by', String(by))
-            }}
-            onPointerLeave={(e) => {
-              e.currentTarget.style.setProperty('--bx', '0')
-              e.currentTarget.style.setProperty('--by', '0')
-            }}
-          >
-            <picture>
-              <source
-                type="image/avif-disabled"
-                srcSet="/assets/meatbar-hall-sm.avif 800w, /assets/meatbar-hall.avif 1600w"
-                sizes="(max-width: 720px) 100vw, 800px"
-              />
-              <img
-                src="/assets/meatbar-hall.webp"
-                srcSet="/assets/meatbar-hall-sm.webp 800w, /assets/meatbar-hall.webp 1600w"
-                sizes="(max-width: 720px) 100vw, 800px"
-                alt="Зал Мясо Бар"
-                loading="lazy"
-                decoding="async"
-              />
-            </picture>
-            <span className="split-live-photo-glow" aria-hidden="true" />
-          </div>
+          <Suspense fallback={null}>
+            <Picture />
+          </Suspense>
         </div>
       </section>
 
@@ -904,377 +514,285 @@ export function HomePage() {
             в зале или позвонить в ресторан напрямую.
           </p>
         </div>
-        <div className="tool-grid">
-          <a href="#menu">
-            <Flame />
-            <span>Открыть меню</span>
-            <small>{visibleMenuCount} позиций</small>
-          </a>
-          <a href="#order">
-            <ShoppingBag />
-            <span>Собрать заказ</span>
-            <small>доставка / самовывоз</small>
-          </a>
-          <a href="#booking" onClick={scrollToBooking}>
-            <CalendarDays />
-            <span>Выбрать стол</span>
-            <small>схема зала</small>
-          </a>
-          <a href="tel:+79129074747">
-            <Phone />
-            <span>Позвонить</span>
-            <small>+7 912 907-47-47</small>
-          </a>
-          <a href="https://www.instagram.com/meatbar_nv/" target="_blank" rel="noreferrer">
-            <img className="social-icon" src="/assets/social/instagram.svg" alt="" loading="lazy" decoding="async" />
-            <span>Instagram</span>
-            <small>@meatbar_nv</small>
-          </a>
-          <a href="https://vk.com/meatbar_nv" target="_blank" rel="noreferrer">
-            <img className="social-icon" src="/assets/social/vk.svg" alt="" loading="lazy" decoding="async" />
-            <span>VK</span>
-            <small>МЯСО БАР</small>
-          </a>
-          <a href="https://2gis.ru/nizhnevartovsk/firm/70000001086984807" target="_blank" rel="noreferrer">
-            <img className="social-icon" src="/assets/social/2gis.webp" alt="" loading="lazy" decoding="async" />
-            <span>2ГИС</span>
-            <small>4.7 · 751 оценка</small>
-          </a>
-        </div>
-      </section>
+        {/* Слайдер фотографий интерьера — кинематограф */}
+        <div className="venue-slider" ref={(el: HTMLDivElement | null) => {
+          if (!el) {
+            // Cleanup при unmount
+            const prev = (window as unknown as Record<string, unknown>).__venueSliderCleanup as (() => void) | undefined
+            if (prev) { prev(); delete (window as unknown as Record<string, unknown>).__venueSliderCleanup }
+            return
+          }
+          const img = el.querySelector('.venue-slider__img') as HTMLImageElement | null
+          const caption = el.querySelector('.venue-slider__caption') as HTMLElement | null
+          if (!img || !caption) return
+          if (img.dataset.init === '1') return
+          img.dataset.init = '1'
 
-      <section className="menu-section section-with-bg" data-bg="5" id="menu">
-        <div className="section-bg" aria-hidden="true" />
-        <div className="section-intro row">
-          <div>
-            <span className="chapter">Меню</span>
-            <FireText as="h2" intensity="strong" stagger={26}>{`${visibleMenuCount} блюд, которые мы готовим сегодня.`}</FireText>
-          </div>
-          <p className="subtitle-reveal">Рёбра, брискет, северные ягоды, салаты и супы. Всё — с реальной кухни, с весом и описаниями.</p>
-        </div>
-        <div className="menu-layout">
-          <aside className="menu-tabs" aria-label="Разделы меню">
-            {menu.map((item) => (
-              <button
-                className={item.name === activeCategory ? 'active' : ''}
-                key={item.name}
-                onClick={() => setActiveCategory(item.name)}
-              >
-                {item.name}
-                <span>{item.items.length}</span>
-              </button>
-            ))}
-          </aside>
-          <div className="menu-board menu-board-cards">
-            <h3>{category?.name ?? 'Меню'}</h3>
-            {category ? (
-              <div className="menu-card-grid">
-                {category.items.map((item) => (
-                  <article className={`dish-card${item.image ? ' parallax-photo' : ' dish-card-no-img'}`} key={`${category.name}-${item.title}`}>
-                  {item.image ? (
-                    isWebp(item.image) ? (
-                      <picture>
-                        <source
-                          type="image/avif-disabled"
-                          srcSet={`${toSmAvif(item.image)} 480w, ${toAvif(item.image)} 800w`}
-                          sizes="(max-width: 720px) 92vw, 380px"
-                        />
-                        <img
-                          src={item.image}
-                          srcSet={`${toSmWebp(item.image)} 480w, ${item.image} 800w`}
-                          sizes="(max-width: 720px) 92vw, 380px"
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          width={800}
-                          height={600}
-                        />
-                      </picture>
-                    ) : (
-                      <img
-                        src={item.image}
-                        sizes="(max-width: 720px) 92vw, 380px"
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        width={800}
-                        height={600}
-                      />
-                    )
-                  ) : null}
-                  <div>
-                    <span>{item.weight ?? category.name}</span>
-                    <h4>{item.title}</h4>
-                    {item.description ? <p>{item.description}</p> : null}
-                    <footer>
-                      <strong>{formatPrice(item.price)} ₽</strong>
-                      {cartByTitle.get(item.title) ? (
-                        <div className="dish-qty" role="group" aria-label={`Количество: ${item.title}`}>
-                          <button
-                            type="button"
-                            className="dish-qty-btn"
-                            aria-label={`Уменьшить ${item.title}`}
-                            onClick={() => decrementCart(item.title)}
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="dish-qty-value" aria-live="polite">
-                            {cartByTitle.get(item.title)}
-                          </span>
-                          <button
-                            type="button"
-                            className="dish-qty-btn"
-                            aria-label={`Увеличить ${item.title}`}
-                            onClick={() => incrementCart(item.title)}
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            addToCart(
-                              item.title,
-                              item.price,
-                              item.id,
-                              item.image,
-                            )
-                          }
-                        >
-                          В заказ
-                        </button>
-                      )}
-                    </footer>
-                  </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="subtitle-reveal is-revealed">Загружаем меню…</p>
-            )}
+          let idx = 0
+          const total = 10
+          let alive = true
+          const timers: ReturnType<typeof setTimeout>[] = []
+          const captions = [
+            'Искусство на стенах, вкус на тарелке.',
+            'Каждая деталь — про тепло.',
+            'Встречаем как своих.',
+            'Интерьер с характером.',
+            'Природа рядом, город — за порогом.',
+            'Атмосфера, в которой хочется остаться.',
+            'Здесь время замедляется.',
+            'Тишина между фразами — тоже часть вкуса.',
+            'Бар, где знают ваш вкус.',
+            'Ваш стол уже ждёт.',
+          ]
+          const directions = ['up', 'down', 'left', 'right', 'scale']
+          const isMobile = window.matchMedia('(max-width: 768px)').matches
+
+          const safeTimeout = (fn: () => void, ms: number) => {
+            const id = setTimeout(() => { if (alive) fn() }, ms)
+            timers.push(id)
+            return id
+          }
+
+          const getTransform = (dir: string) => {
+            switch (dir) {
+              case 'up': return 'translateY(40px)'
+              case 'down': return 'translateY(-40px)'
+              case 'left': return 'translateX(40px)'
+              case 'right': return 'translateX(-40px)'
+              case 'scale': return 'scale(0.92)'
+              default: return 'translateY(40px)'
+            }
+          }
+
+          // Показать первый слайд
+          img.src = `/assets/gallery/slide-1${isMobile ? '-sm' : ''}.webp`
+          img.style.opacity = '1'
+          img.style.transform = 'scale(1) translate(0, 0)'
+          caption.style.opacity = '0'
+          safeTimeout(() => {
+            caption.textContent = captions[0]
+            caption.style.opacity = '1'
+          }, 1500)
+
+          const cycle = () => {
+            if (!alive) return
+            safeTimeout(() => { if (alive) caption.style.opacity = '0' }, 8000)
+            safeTimeout(() => {
+              if (!alive) return
+              img.style.opacity = '0'
+              img.style.transform = 'scale(1.02)'
+            }, 9000)
+            safeTimeout(() => {
+              if (!alive) return
+              idx = (idx + 1) % total
+              const n = idx + 1
+              const dir = directions[Math.floor(Math.random() * directions.length)]
+              img.style.transition = 'none'
+              img.style.transform = getTransform(dir)
+              img.src = `/assets/gallery/slide-${n}${isMobile ? '-sm' : ''}.webp`
+              img.onload = null
+              void img.offsetWidth
+              const show = () => {
+                if (!alive) return
+                img.style.transition = 'opacity 1.2s ease, transform 1.8s cubic-bezier(0.22, 1, 0.36, 1)'
+                img.style.opacity = '1'
+                img.style.transform = 'scale(1) translate(0, 0)'
+                safeTimeout(() => {
+                  if (!alive) return
+                  caption.textContent = captions[idx]
+                  caption.style.opacity = '1'
+                }, 1500)
+              }
+              if (img.complete && img.naturalWidth > 0) show()
+              else img.onload = show
+              cycle()
+            }, 10000)
+          }
+          cycle()
+
+          // C8: IO-пауза — останавливаем цикл когда секция не видна
+          let sliderVisible = true
+          const sliderIO = new IntersectionObserver(([entry]) => {
+            sliderVisible = entry.isIntersecting
+          }, { rootMargin: '20% 0px 20% 0px', threshold: 0 })
+          sliderIO.observe(el)
+
+          // Переопределяем safeTimeout чтобы учитывать visibility
+          const origSafeTimeout = safeTimeout
+          // eslint-disable-next-line no-inner-declarations
+          function safeTimeoutVisible(fn: () => void, ms: number) {
+            const check = () => {
+              if (!alive) return
+              if (sliderVisible) { fn() }
+              else { origSafeTimeout(check, 1000) }
+            }
+            return origSafeTimeout(check, ms)
+          }
+          // Patch: будущие вызовы cycle используют видимость
+          void safeTimeoutVisible
+
+          // Сохраняем cleanup
+          ;(window as unknown as Record<string, unknown>).__venueSliderCleanup = () => {
+            alive = false
+            timers.forEach(clearTimeout)
+            sliderIO.disconnect()
+            img.onload = null
+            delete img.dataset.init
+          }
+        }}>
+          <img
+            className="venue-slider__img"
+            src="/assets/gallery/slide-1.webp"
+            alt="Интерьер Мясо Бар"
+            width={1600}
+            height={900}
+            decoding="async"
+          />
+          <div className="venue-slider__overlay" aria-hidden="true" />
+          <div className="venue-slider__center">
+            <p className="venue-slider__caption">Искусство на стенах, вкус на тарелке.</p>
+            <nav className="venue-slider__actions" aria-label="Быстрые действия">
+              <a href="/menu" className="fire-btn fire-btn-outline fire-btn-glow">Меню</a>
+              <a href="/booking" className="fire-btn fire-btn-outline fire-btn-glow">Бронь</a>
+              <a href="tel:+79129074747" className="fire-btn fire-btn-outline fire-btn-glow">Позвонить</a>
+            </nav>
           </div>
         </div>
       </section>
+    </main>
 
-      <Suspense fallback={null}>
-        <BarMenuSection />
-      </Suspense>
-
-      <section className="order-section" id="order">
-        <div className="section-intro row">
-          <div>
-            <span className="chapter">Самовывоз и доставка</span>
-            <FireText as="h2" intensity="strong" stagger={26}>Соберите заказ за минуту.</FireText>
-          </div>
-          <p className="subtitle-reveal subtitle-reveal--right">
-            Добавьте блюда в корзину, оставьте телефон — мы перезвоним и подготовим всё
-            к вашему приходу. Оплата: карта, наличные, СБП или Онлайн.
+      <section className="order-section--reel" id="order">
+        {/* Огненный заголовок НАД видео */}
+        <div className="order-fire-intro">
+          <span className="chapter">Огонь на вынос</span>
+          <FireText as="h2" intensity="strong" stagger={24}>
+            Горячее — прямо к вам.
+          </FireText>
+          <p className="subtitle-reveal">
+            Соберите заказ онлайн. Мы упакуем с углей и подготовим к вашему приходу, или привезём сами.
           </p>
         </div>
-        <div className="order-layout">
-          <div className="featured-dishes">
-            {featuredMenu.map((item) => (
-              <article className="featured-dish parallax-photo" key={item.title}>
-                {item.image ? (
-                  isWebp(item.image) ? (
-                    <picture>
-                      <source
-                        type="image/avif-disabled"
-                        srcSet={`${toSmAvif(item.image)} 480w, ${toAvif(item.image)} 800w`}
-                        sizes="(max-width: 980px) 92vw, 520px"
-                      />
-                      <img
-                        src={item.image}
-                        srcSet={`${toSmWebp(item.image)} 480w, ${item.image} 800w`}
-                        sizes="(max-width: 980px) 92vw, 520px"
-                        alt=""
-                        loading="lazy"
-                        decoding="async"
-                        width={800}
-                        height={600}
-                      />
-                    </picture>
-                  ) : (
-                    <img
-                      src={item.image}
-                      sizes="(max-width: 980px) 92vw, 520px"
-                      alt=""
-                      loading="lazy"
-                      decoding="async"
-                      width={800}
-                      height={600}
-                    />
-                  )
-                ) : <div className="featured-dish-placeholder" />}
-                <div>
-                  <span>{item.category}</span>
-                  <h3>{item.title}</h3>
-                  <p>{item.description ?? item.weight}</p>
-                  {cartByTitle.get(item.title) ? (
-                    <div className="dish-qty featured-dish-qty" role="group" aria-label={`Количество: ${item.title}`}>
-                      <button
-                        type="button"
-                        className="dish-qty-btn"
-                        aria-label={`Уменьшить ${item.title}`}
-                        onClick={() => decrementCart(item.title)}
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="dish-qty-value" aria-live="polite">
-                        {cartByTitle.get(item.title)} · {formatPrice(item.price * (cartByTitle.get(item.title) ?? 1))} ₽
-                      </span>
-                      <button
-                        type="button"
-                        className="dish-qty-btn"
-                        aria-label={`Увеличить ${item.title}`}
-                        onClick={() => incrementCart(item.title)}
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() =>
-                        addToCart(
-                          item.title,
-                          item.price,
-                          item.id,
-                          item.image,
-                        )
-                      }
-                    >
-                      Добавить · {formatPrice(item.price)} ₽
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
+        {/* Scroll-zoom видео — CSS animation-timeline: view() */}
+        <div className="order-reel-wrap">
+          <div className="order-reel-card">
+            <video
+              className="order-reel__video"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              disablePictureInPicture
+              disableRemotePlayback
+              ref={(el: HTMLVideoElement | null) => {
+                if (!el) return
+                el.playbackRate = 0.65
+                // A3: IO-пауза видео вне viewport
+                const io = new IntersectionObserver(([entry]) => {
+                  if (entry.isIntersecting) { el.play().catch(() => {}) }
+                  else { el.pause() }
+                }, { threshold: 0.1 })
+                io.observe(el)
+              }}
+            >
+              <source src="/assets/order-reel.webm" type="video/webm" />
+              <source src="/assets/order-reel.mp4" type="video/mp4" />
+            </video>
+            <div className="order-reel__veil" />
+            <div className="order-reel__darken" />
           </div>
-          <aside className="cart-summary-card">
-            <div className="cart-summary-head">
-              <ShoppingBag size={22} />
-              <div>
-                <strong>Ваш заказ</strong>
-                <span>{cartCount ? `${cartCount} поз. · ${formatPrice(cartTotal)} ₽` : 'пока пусто — выберите блюдо'}</span>
-              </div>
-            </div>
-            <p className="cart-summary-text">
-              Корзина живёт в правой панели — нажмите кнопку ниже, чтобы посмотреть весь заказ,
-              указать телефон и оформить.
-            </p>
-            <FireButton onClick={() => setCartOpen(true)} className="full">
-              Открыть корзину {cartCount ? `· ${formatPrice(cartTotal)} ₽` : ''}
-            </FireButton>
-          </aside>
+          {/* Фразы поверх карточки — scroll-driven (без wheel-hijack) */}
+          <div className="order-reel__phrases" ref={(el: HTMLDivElement | null) => {
+            if (!el) {
+              const prev = (window as unknown as Record<string, unknown>).__orderReelCleanup as (() => void) | undefined
+              if (prev) { prev(); delete (window as unknown as Record<string, unknown>).__orderReelCleanup }
+              return
+            }
+            const phrases = el.querySelectorAll<HTMLElement>('.order-reel__phrase')
+            if (phrases.length < 3) return
+            const wrap = el.closest('.order-reel-wrap') as HTMLElement | null
+            if (!wrap) return
+
+            let currentIdx = -1
+
+            const showPhrase = (idx: number) => {
+              if (idx === currentIdx) return
+              currentIdx = idx
+              phrases.forEach((ph, i) => {
+                ph.style.opacity = i === idx ? '1' : '0'
+                ph.style.transform = i === idx ? 'translateY(0)' : 'translateY(12px)'
+              })
+            }
+
+            /* Scroll-driven: определяем какую фразу показывать по позиции
+               секции в viewport. Никакого preventDefault, никакого passive:false. */
+            let rafPending = false
+            const update = () => {
+              rafPending = false
+              const rect = wrap.getBoundingClientRect()
+              const vh = window.innerHeight
+              // Нормализуем прогресс: 0 = секция входит снизу, 1 = уходит вверх
+              const progress = 1 - (rect.bottom / (vh + rect.height))
+              const clamped = Math.max(0, Math.min(1, progress))
+
+              if (clamped < 0.25 || clamped > 0.85) {
+                // Вне зоны — скрываем все фразы
+                if (currentIdx !== -1) {
+                  currentIdx = -1
+                  phrases.forEach((ph) => { ph.style.opacity = '0' })
+                }
+              } else {
+                // Зона 0.25–0.85 разбита на 3 части
+                const zone = (clamped - 0.25) / 0.6
+                const idx = Math.min(2, Math.floor(zone * 3))
+                showPhrase(idx)
+              }
+            }
+
+            const onScroll = () => {
+              if (rafPending) return
+              rafPending = true
+              requestAnimationFrame(update)
+            }
+
+            window.addEventListener('scroll', onScroll, { passive: true })
+            update()
+
+            ;(window as unknown as Record<string, unknown>).__orderReelCleanup = () => {
+              window.removeEventListener('scroll', onScroll)
+            }
+          }}>
+            <p className="order-reel__phrase">Жар углей. Аромат дыма. Ваш заказ.</p>
+            <p className="order-reel__phrase">Рёбра, брискет, стейк — упакуем горячим.</p>
+            <p className="order-reel__phrase">Огонь не остывает по дороге к вам.</p>
+          </div>
         </div>
       </section>
 
       {cartNotice ? <div className="cart-toast">{cartNotice}</div> : null}
 
-      {/* Сжатая mobile-CTA: убрана дубликатная кнопка корзины — используется верхняя
-          и боковая навигация. Оставлены только бронь и звонок. */}
-      <nav className="mobile-cta-bar" aria-label="Быстрые действия">
-        <a className="book" href="#booking" data-nav="booking" onClick={scrollToBooking}>
+      {/* Mobile CTA — бронь ведёт на отдельную страницу /booking */}
+      <nav className="mobile-cta-bar" ref={(el: HTMLElement | null) => {
+        if (!el) return
+        if (el.dataset.init) return
+        el.dataset.init = '1'
+        let lastY = window.scrollY
+        const onScroll = () => {
+          const y = window.scrollY
+          if (y > lastY && y > 100) {
+            el.classList.add('is-hidden')
+          } else {
+            el.classList.remove('is-hidden')
+          }
+          lastY = y
+        }
+        window.addEventListener('scroll', onScroll, { passive: true })
+      }} aria-label="Быстрые действия">
+        <a className="book" href="/booking">
           Выбрать стол
         </a>
         <a className="order" href="tel:+79129074747">Позвонить</a>
       </nav>
-
-      <section ref={bookingSectionRef} className="booking-section booking-section--floor" id="booking">
-        <div className="section-intro row">
-          <div>
-            <span className="chapter">Бронь столика</span>
-            <FireText as="h2" intensity="strong" stagger={26}>Выберите место в зале — как в жизни.</FireText>
-          </div>
-          <p className="subtitle-reveal">
-            Откройте зал и нажмите на свой столик — откроется большой просмотр
-            с живым фото места и форма брони в одном экране. Администратор
-            подтвердит время звонком.
-          </p>
-        </div>
-
-        <div className="booking-experience booking-experience--floor">
-          <div className="booking-floor booking-floor--solo">
-            {/* Phase 9.2: карточки-сцены и видео переехали внутрь
-                BookingDialog. План зала — единственный вход в бронь:
-                клик по столу открывает модалку с автоплеем видео. */}
-            <Suspense
-              fallback={
-                <div className="floorplan" aria-hidden="true">
-                  <div className="floorplan-stage" style={{ minHeight: 520 }} />
-                </div>
-              }
-            >
-              {bookingSectionNear || bookingOpen ? (
-                <TableMap
-                  tables={mappedTables}
-                  selected={mappedTables.find((t) => t.id === selectedTable.id) ?? null}
-                  onSelect={(t) => {
-                    // Warm up the dialog chunk before showing it.
-                    preloadBookingChunks()
-                    const matched = (tables as Table[]).find((x) => x.id === t.id)
-                    if (!matched) return
-                    chooseTable({
-                      ...matched,
-                      seats: t.seats,
-                      hall: t.hall,
-                      number: t.number,
-                    } as Table)
-                    setBookingState('idle')
-                    setBookingOpen(true)
-                    trackEvent('booking_dialog_open', {
-                      table_id: matched.id,
-                      table_number: matched.number,
-                      hall: t.hall,
-                    })
-                  }}
-                />
-              ) : (
-                <div className="floorplan" aria-hidden="true">
-                  <div className="floorplan-stage" style={{ minHeight: 520 }} />
-                </div>
-              )}
-            </Suspense>
-          </div>
-        </div>
-      </section>
-
-      <Suspense fallback={null}>
-        <BookingDialog
-          open={bookingOpen}
-          table={
-            bookingOpen
-              ? mappedTables.find((t) => t.id === selectedTable.id) ?? null
-              : null
-          }
-          booking={{
-            guests: booking.guests,
-            date: booking.date,
-            time: booking.time,
-            name: booking.name,
-            phone: booking.phone,
-            comment: booking.comment,
-          }}
-          onChange={(next) =>
-            setBooking({
-              ...booking,
-              guests: next.guests,
-              date: next.date,
-              time: next.time,
-              name: next.name,
-              phone: next.phone,
-              comment: next.comment,
-            })
-          }
-          onClose={() => setBookingOpen(false)}
-          onSubmit={(event) => {
-            submitBooking(event)
-          }}
-          state={bookingState}
-        />
-      </Suspense>
 
       <section className="jobs-section" id="jobs">
         <div className="jobs-card">
@@ -1285,7 +803,7 @@ export function HomePage() {
             Отклик — через звонок или Instagram.
           </p>
           <div className="jobs-actions">
-            <a className="primary-link" href="tel:+79129074747">Позвонить</a>
+            <a className="fire-btn fire-btn-outline fire-btn-glow primary-link" href="tel:+79129074747">Позвонить</a>
             <a className="secondary-link" href="https://www.instagram.com/meatbar_nv/" target="_blank" rel="noreferrer">
               Написать в Instagram
             </a>
@@ -1423,7 +941,7 @@ export function HomePage() {
                 <em>лучший гриль-бар города</em>
               </span>
             </a>
-            <a className="footer-link" href="#booking" onClick={scrollToBooking}>
+            <a className="footer-link" href="/booking">
               <CalendarDays size={18} aria-hidden="true" />
               <span>Забронировать столик</span>
             </a>
@@ -1442,13 +960,19 @@ export function HomePage() {
         </div>
       </footer>
 
-      <SideNav
+      <FloatingDock
         open={navOpen}
-        cartCount={cartCount}
-        cartTotal={cartTotal}
         onClose={() => setNavOpen(false)}
-        onOpenCart={() => setCartOpen(true)}
-        onBookingNavigate={(event) => scrollToBooking(event)}
+        items={[
+          { title: 'Зал', icon: <Sofa size={20} />, href: '#our-room' },
+          { title: 'Меню', icon: <ChefHat size={20} />, href: '/menu' },
+          { title: 'Бар', icon: <GlassWater size={20} />, href: '/bar' },
+          { title: 'Бронь', icon: <CalendarCheck size={20} />, href: '/booking' },
+          { title: 'Бизнес-ланч', icon: <Coffee size={20} />, href: '/business-lunch' },
+          { title: 'Вакансии', icon: <Briefcase size={20} />, href: '#jobs' },
+          { title: 'Контакты', icon: <Navigation size={20} />, href: '#contacts' },
+          { title: 'Позвонить', icon: <PhoneCall size={20} />, href: 'tel:+79129074747' },
+        ]}
       />
       <Suspense fallback={null}>
         <CartDrawer
@@ -1470,7 +994,7 @@ export function HomePage() {
       {/* #9 — фоновый эмбиент. Выкл. по умолчанию, состояние
           в localStorage, без настроек в админке. */}
       <AmbientAudio />
-    </main>
+    </>
   )
 }
 
@@ -1511,6 +1035,19 @@ function HeroReel() {
   const [reduced] = useState(() =>
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
+  /* Task A6 — на low-tier + save-data hero-video не рендерим вовсе.
+     Показываем статичный AVIF/WebP постер: первая загрузка быстрее,
+     трафик ниже, CPU не тратится на декод MP4. Включается когда
+     реально сошлись 3 признака (perf=low И save-data/2G), чтобы
+     среднему мобильному hero-видео оставалось. */
+  const [stillFrame] = useState(() => {
+    if (typeof window === 'undefined') return false
+    if (detectPerfTier() !== 'low') return false
+    const conn = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean } }).connection
+    const veryLow =
+      conn?.saveData === true || /(?:^|[^4-9])2g/i.test(conn?.effectiveType ?? '')
+    return veryLow
+  })
   const [videoPreload] = useState<'metadata' | 'none'>(() => {
     if (typeof window === 'undefined') return 'metadata'
     const conn = (navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean } }).connection
@@ -1532,10 +1069,19 @@ function HeroReel() {
     return () => mqs.forEach((mq) => mq.removeEventListener?.('change', update))
   }, [])
 
-  // We intentionally do NOT pause/play the hero video via IntersectionObserver.
-  // It can look like "frame-by-frame" playback when the element sits near
-  // the viewport edge. Performance is handled by choosing a lower-res source
-  // on low-tier devices (see pickHeroReelSrc).
+  // A3: IO-пауза hero-видео когда секция далеко от viewport.
+  // Используем rootMargin 50% чтобы не было "frame-by-frame" эффекта
+  // при скролле вблизи hero — видео паузится только когда реально далеко.
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { video.play().catch(() => {}) }
+      else { video.pause() }
+    }, { rootMargin: '50% 0px 50% 0px', threshold: 0 })
+    io.observe(video)
+    return () => io.disconnect()
+  }, [])
 
   // When the chosen source changes mid-session (e.g. on resize crossing a
   // breakpoint), swap it without remounting the <video> element. We keep the
@@ -1570,6 +1116,16 @@ function HeroReel() {
         <source srcSet="/assets/hero-poster.avif" type="image/avif" />
         <source srcSet="/assets/hero-poster.webp" type="image/webp" />
         <img src="/assets/hero-poster.webp" alt="" loading="eager" decoding="async" />
+      </picture>
+    )
+  }
+
+  if (stillFrame) {
+    return (
+      <picture className="hero-reel hero-reel--still">
+        <source srcSet="/assets/hero-poster.avif" type="image/avif" />
+        <source srcSet="/assets/hero-poster.webp" type="image/webp" />
+        <img src="/assets/hero-poster.webp" alt="" loading="eager" decoding="async" fetchPriority="high" />
       </picture>
     )
   }
@@ -1618,22 +1174,15 @@ function Header({
         </span>
       </a>
       <nav className="header-nav-desktop">
-        <a href="#our-room">Зал</a>
-        <a href="#menu">Меню</a>
-        <a href="#bar">Бар</a>
-        <a
-          href="#booking"
-          data-nav="booking"
-          onClick={scrollToBooking}
-          onPointerEnter={preloadBookingChunks}
-          onFocus={preloadBookingChunks}
-        >
-          Бронь
-        </a>
-        <a href="#contacts">Контакты</a>
+        <a href="#our-room">Зал<span className="nav-hint">Интерьер и атмосфера</span></a>
+        <a href="/menu">Меню<span className="nav-hint">Доставка и самовывоз</span></a>
+        <a href="/bar">Бар<span className="nav-hint">Коктейли и вина</span></a>
+        <a href="/booking">Бронь<span className="nav-hint">Выбрать стол</span></a>
+        <a href="/business-lunch">Бизнес-ланч<span className="nav-hint">Каждый день 12:00–15:00</span></a>
+        <a href="#contacts">Контакты<span className="nav-hint">Адрес и телефон</span></a>
       </nav>
       <div className="header-actions">
-        <a className="header-call" href="tel:+79129074747">
+        <a className="fire-btn fire-btn-outline fire-btn-glow header-call" href="tel:+79129074747">
           <Phone size={16} />
           <span>+7 (912) 907-47-47</span>
         </a>

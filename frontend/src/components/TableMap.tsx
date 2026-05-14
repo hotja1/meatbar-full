@@ -8,6 +8,7 @@ import {
 } from 'react'
 import { formatSeats, getTableNoise, TOP_TABLES, type TableNoise } from '../data/tables-layout'
 import { getTableScene } from '../data/tables-scenes'
+import { FireButton } from './FireButton'
 import './tablemap.css'
 
 export type MapTable = {
@@ -94,7 +95,7 @@ const HALL_BADGE: Record<
     logoY: 82,
     logoW: 152,
     logoH: 92,
-    mask: { x: 0, y: 0, w: 406, h: 44 },
+    mask: { x: 0, y: 0, w: 520, h: 90 },
   },
 }
 
@@ -109,6 +110,10 @@ const HALL_LABEL: Record<1 | 2 | 3, string> = {
 export function TableMap({ tables, selected, onSelect }: TableMapProps) {
   const [activeHall, setActiveHall] = useState<1 | 2 | 3>(1)
   const [hovered, setHovered] = useState<HoverState | null>(null)
+  /* Mobile tap-to-preview: first tap shows info, second tap selects.
+     On desktop (hover:hover) this state is unused — click selects immediately. */
+  const [previewed, setPreviewed] = useState<MapTable | null>(null)
+  const isTouchRef = useRef(false)
   const stageRef = useRef<HTMLDivElement | null>(null)
   const tooltipRef = useRef<HTMLDivElement | null>(null)
   const hoverRafRef = useRef<number | null>(null)
@@ -116,7 +121,11 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
   const hoverTableIdRef = useRef<number | null>(null)
 
   useEffect(() => {
+    // Detect touch capability once.
+    const onTouch = () => { isTouchRef.current = true }
+    window.addEventListener('touchstart', onTouch, { once: true, passive: true })
     return () => {
+      window.removeEventListener('touchstart', onTouch)
       if (hoverRafRef.current != null) {
         window.cancelAnimationFrame(hoverRafRef.current)
       }
@@ -184,6 +193,29 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
     setHovered(null)
   }, [])
 
+  const handleTableClick = useCallback(
+    (table: MapTable) => {
+      if (!isTouchRef.current) {
+        // Desktop: click = select immediately.
+        onSelect?.(table)
+        return
+      }
+      // Mobile: first tap = preview, second tap on same table = select.
+      if (previewed?.id === table.id) {
+        onSelect?.(table)
+        setPreviewed(null)
+      } else {
+        setPreviewed(table)
+      }
+    },
+    [onSelect, previewed],
+  )
+
+  // Clear preview when switching halls.
+  useEffect(() => {
+    setPreviewed(null)
+  }, [activeHall])
+
   const liveStatus = selected
     ? `Выбран стол №${selected.number}, ${formatSeats(selected.seats, selected.seatsMax)}, ${statusWord(selected.status)}.`
     : 'Стол еще не выбран.'
@@ -193,18 +225,19 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
       <div className="floorplan-controls">
         <div className="floorplan-tabs" role="tablist" aria-label="Залы">
           {HALLS.map((hall) => (
-            <button
+            <FireButton
               key={hall}
-              type="button"
+              variant={activeHall === hall ? 'outline' : 'ghost'}
+              glow={activeHall === hall}
               role="tab"
               aria-selected={activeHall === hall}
               aria-controls="floorplan-stage"
-              className={activeHall === hall ? 'active' : ''}
+              className="floorplan-tab-btn"
               onClick={() => setActiveHall(hall)}
             >
               <span>{HALL_LABEL[hall]}</span>
               <small>{counts[hall].free} из {counts[hall].total} свободно</small>
-            </button>
+            </FireButton>
           ))}
         </div>
       </div>
@@ -215,18 +248,17 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
         className={`floorplan-stage hall-${activeHall}${selectedInHall ? ' has-selected' : ''}`}
         role="tabpanel"
       >
-        <svg viewBox={VIEWBOX} className="floor-svg" aria-label={`Схема зала ${activeHall}`} preserveAspectRatio="xMidYMid meet">
-          <image
-            href={HALL_IMAGE[activeHall]}
-            x="0"
-            y="0"
-            width={VIEW_WIDTH}
-            height={VIEW_HEIGHT}
-            preserveAspectRatio="xMidYMid meet"
-            opacity="1"
-            style={{ filter: 'contrast(1.07) saturate(1.1) brightness(1.08)' }}
+        <div className="floor-map-wrapper">
+          <img
+            src={HALL_IMAGE[activeHall]}
+            alt={`Схема зала ${activeHall}`}
+            draggable={false}
+            loading="lazy"
+            decoding="async"
+            width={1448}
+            height={1086}
           />
-          <rect x="0" y="0" width={VIEW_WIDTH} height={VIEW_HEIGHT} fill="rgba(168,120,72,0.08)" />
+          <svg viewBox={VIEWBOX} className="floor-svg" preserveAspectRatio="xMidYMid meet" aria-label={`Схема зала ${activeHall}`}>
 
           {(() => {
             const badge = HALL_BADGE[activeHall]
@@ -303,7 +335,7 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
                 key={table.id}
                 className={className}
                 tabIndex={0}
-                onClick={() => onSelect?.(table)}
+                onClick={() => handleTableClick(table)}
                 onPointerEnter={(event) => setHoverFromPointer(table, event)}
                 onPointerMove={(event) => setHoverFromPointer(table, event)}
                 onPointerLeave={clearHover}
@@ -338,6 +370,7 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
             )
           })}
         </svg>
+        </div>
 
         {hovered ? <TableTooltip state={hovered} tooltipRef={tooltipRef} /> : null}
       </div>
@@ -350,11 +383,40 @@ export function TableMap({ tables, selected, onSelect }: TableMapProps) {
 
       <p className="floorplan-live" role="status" aria-live="polite">{liveStatus}</p>
 
+      {/* Mobile tap-to-preview card (shows on first tap before selection) */}
+      {previewed ? (
+        <MobilePreviewCard table={previewed} onSelect={() => { onSelect?.(previewed); setPreviewed(null) }} />
+      ) : null}
+
       {selectedInHall ? (
         <div className="floorplan-selected">
           <strong>Стол №{selectedInHall.number}</strong>
           <span>{formatSeats(selectedInHall.seats, selectedInHall.seatsMax)} · {zoneLabel(selectedInHall.zone)}</span>
         </div>
+      ) : null}
+    </div>
+  )
+}
+
+function MobilePreviewCard({ table, onSelect }: { table: MapTable; onSelect: () => void }) {
+  const scene = getTableScene(table.number)
+  const noise: TableNoise = getTableNoise(table)
+
+  return (
+    <div className="floorplan-preview">
+      {scene ? (
+        <img className="floorplan-preview__photo" src={scene.imageWebpSm} alt="" loading="lazy" decoding="async" />
+      ) : null}
+      <div className="floorplan-preview__body">
+        <strong>Стол №{table.number}</strong>
+        <span className="floorplan-preview__meta">{formatSeats(table.seats, table.seatsMax)} · {zoneLabel(table.zone)}</span>
+        <span className={`floorplan-preview__noise floorplan-preview__noise--${noise}`}>{noiseLabel(noise)}</span>
+        <span className={`floorplan-preview__status floorplan-preview__status--${table.status}`}>{statusLabel(table.status)}</span>
+      </div>
+      {table.status === 'free' ? (
+        <FireButton variant="outline" glow className="floorplan-preview__btn" onClick={onSelect}>
+          Выбрать
+        </FireButton>
       ) : null}
     </div>
   )

@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Калибратор столов — Мясо Бар</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #0f0a07;
+        color: #f6eee1;
+        font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        gap: 8px;
+        padding: 10px 14px;
+        background: #120d0a;
+        border-bottom: 1px solid #3a332d;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .bar button {
+        padding: 6px 10px;
+        border: 1px solid #3a332d;
+        border-radius: 6px;
+        background: #1d1510;
+        color: #f6eee1;
+        cursor: pointer;
+        font: inherit;
+      }
+      .bar button.active {
+        background: #d81420;
+        border-color: #d81420;
+        color: #fff;
+      }
+      .bar .spacer { flex: 1; }
+      .bar .hint {
+        color: #cbb9a6;
+        font-size: 12px;
+      }
+      .stage {
+        position: relative;
+        margin: 12px;
+        background: #1d1510;
+        border: 1px solid #3a332d;
+        overflow: auto;
+      }
+      .canvas {
+        position: relative;
+        display: inline-block;
+      }
+      .canvas img {
+        display: block;
+        width: 100%;
+        height: auto;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+      svg.overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+      }
+      svg .outline {
+        fill: rgba(123, 214, 141, 0.12);
+        stroke: #7bd68d;
+        stroke-width: 2;
+        pointer-events: none;
+      }
+      svg .outline.selected {
+        fill: rgba(255, 255, 255, 0.18);
+        stroke: #fff;
+        stroke-width: 2.4;
+      }
+      svg .handle {
+        fill: #d81420;
+        stroke: #fff;
+        stroke-width: 1.2;
+        pointer-events: all;
+        cursor: grab;
+      }
+      svg .handle.center {
+        fill: #e0a64b;
+      }
+      svg .handle:active {
+        cursor: grabbing;
+      }
+      svg text.num {
+        fill: #fff;
+        font: 700 16px system-ui, sans-serif;
+        pointer-events: none;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+      }
+      .panel {
+        position: fixed;
+        right: 12px;
+        bottom: 12px;
+        width: 340px;
+        max-height: 60vh;
+        background: #120d0a;
+        border: 1px solid #3a332d;
+        border-radius: 8px;
+        padding: 10px;
+        overflow: auto;
+        z-index: 30;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+      }
+      .panel h3 {
+        margin: 0 0 6px;
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #e0a64b;
+      }
+      .panel .row {
+        display: flex;
+        gap: 6px;
+        margin: 6px 0;
+      }
+      .panel label {
+        flex: 1;
+        display: grid;
+        font-size: 11px;
+        color: #cbb9a6;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .panel input[type="number"] {
+        width: 100%;
+        padding: 4px 6px;
+        border: 1px solid #3a332d;
+        border-radius: 4px;
+        background: #1d1510;
+        color: #f6eee1;
+        font: inherit;
+      }
+      .panel .btns {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .panel button {
+        flex: 1;
+        padding: 6px 8px;
+        border: 1px solid #3a332d;
+        border-radius: 6px;
+        background: #1d1510;
+        color: #f6eee1;
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+      }
+      .panel button.accent {
+        background: #d81420;
+        border-color: #d81420;
+        color: #fff;
+      }
+      .output {
+        position: fixed;
+        left: 12px;
+        bottom: 12px;
+        width: 44vw;
+        max-width: 620px;
+        max-height: 60vh;
+        background: #120d0a;
+        border: 1px solid #3a332d;
+        border-radius: 8px;
+        padding: 10px;
+        display: none;
+        flex-direction: column;
+        z-index: 30;
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+      }
+      .output.open { display: flex; }
+      .output h3 {
+        margin: 0 0 6px;
+        font-size: 13px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #e0a64b;
+      }
+      .output textarea {
+        flex: 1;
+        min-height: 240px;
+        font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace;
+        background: #0b0705;
+        color: #a8e0b6;
+        border: 1px solid #3a332d;
+        border-radius: 4px;
+        padding: 6px;
+        resize: none;
+      }
+      .output .btns {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .legend {
+        color: #cbb9a6;
+        font-size: 11px;
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <button data-hall="1">Зал 1</button>
+      <button data-hall="2">Зал 2</button>
+      <button data-hall="3">Зал 3</button>
+      <span class="legend">Перетаскивай красные точки (вершины) и оранжевую (центр круглого стола). Ctrl+Click на вершине — удалить. Shift+Click на стороне — добавить вершину.</span>
+      <span class="spacer"></span>
+      <button id="btn-export">Экспорт TS</button>
+      <button id="btn-reset">Сброс</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="canvas" id="canvas">
+        <img id="hall-img" alt="" />
+        <svg class="overlay" id="overlay" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+
+    <aside class="panel" id="panel" style="display:none">
+      <h3>Стол №<span id="p-num">—</span></h3>
+      <div class="row">
+        <label>x <input type="number" id="p-x" step="1" /></label>
+        <label>y <input type="number" id="p-y" step="1" /></label>
+      </div>
+      <div class="row">
+        <label>w <input type="number" id="p-w" step="1" /></label>
+        <label>h <input type="number" id="p-h" step="1" /></label>
+      </div>
+      <div class="btns">
+        <button id="btn-dup-up">+ точку сверху</button>
+        <button id="btn-dup-down">+ точку снизу</button>
+      </div>
+      <div class="btns">
+        <button id="btn-snap" class="accent">Обрамить по bbox</button>
+      </div>
+    </aside>
+
+    <section class="output" id="output">
+      <h3>TypeScript блок — вставить в <code>tables-layout.ts</code></h3>
+      <textarea id="output-text" readonly></textarea>
+      <div class="btns">
+        <button class="accent" id="btn-copy">Скопировать</button>
+        <button id="btn-close">Закрыть</button>
+      </div>
+    </section>
+
+    <script type="module">
+      // viewBox из TableMap.tsx
+      const VIEW_W = 1448
+      const VIEW_H = 1086
+
+      const HALL_IMG = {
+        1: '/assets/tables/hall-1-first-layout.png',
+        2: '/assets/tables/hall-2-open-grill-layout.png',
+        3: '/assets/tables/hall-3-lounge-bar-layout.png',
+      }
+
+      // Текущий state, стартуем от живого layout'а.
+      // Формат: { hall, tables: { N: { points?: [[x,y],...], cx?, cy?, rx?, ry?, shape } } }
+      const state = {
+        hall: 1,
+        drag: null,
+        selected: null,
+        layouts: {
+          1: {
+            4: { points: [[439, 323], [500, 317], [509, 365], [442, 372]] },
+            5: { points: [[453, 461], [520, 451], [530, 505], [460, 513]] },
+            6: { points: [[743, 426], [867, 411], [884, 463], [757, 480]] },
+            7: { points: [[674, 262], [797, 249], [811, 291], [685, 305]] },
+          },
+          2: {
+            8: { points: [[487, 747], [583, 745], [585, 800], [489, 801]] },
+            9: { points: [[896, 858], [995, 854], [1002, 905], [899, 909]] },
+            10: { points: [[496, 609], [581, 607], [583, 655], [495, 656]] },
+            11: { points: [[888, 723], [978, 718], [984, 763], [893, 768]] },
+            12: { points: [[870, 596], [962, 595], [968, 639], [874, 642]] },
+            13: { shape: 'round', cx: 882, cy: 418, rx: 33, ry: 33 },
+            14: { points: [[517, 440], [585, 436], [588, 486], [519, 489]] },
+            15: { shape: 'round', cx: 876, cy: 338, rx: 32, ry: 31 },
+            16: { points: [[520, 291], [585, 290], [587, 344], [520, 345]] },
+            17: { shape: 'round', cx: 869, cy: 263, rx: 31, ry: 27 },
+            18: { points: [[517, 230], [582, 230], [584, 271], [517, 273]] },
+            19: { shape: 'round', cx: 863, cy: 194, rx: 30, ry: 26 },
+            20: { points: [[516, 100], [581, 99], [582, 142], [517, 143]] },
+            21: { shape: 'round', cx: 859, cy: 129, rx: 32, ry: 25 },
+          },
+          3: {
+            22: { points: [[485, 616], [524, 644], [491, 688], [450, 658]] },
+            23: { shape: 'round', cx: 609, cy: 853, rx: 33, ry: 34 },
+            24: { points: [[398, 734], [437, 763], [402, 807], [363, 777]] },
+            25: { shape: 'round', cx: 699, cy: 771, rx: 27, ry: 33 },
+            26: { shape: 'round', cx: 828, cy: 420, rx: 35, ry: 32 },
+            27: { points: [[788, 182], [872, 232], [849, 260], [761, 213]] },
+            29: { points: [[607, 112], [691, 162], [669, 194], [578, 143]] },
+            30: { points: [[519, 290], [551, 306], [510, 353], [477, 333]] },
+            31: { points: [[616, 337], [647, 357], [606, 405], [575, 385]] },
+            32: { points: [[703, 402], [735, 423], [699, 473], [664, 451]] },
+            33: { points: [[638, 507], [671, 531], [636, 585], [601, 560]] },
+            34: { points: [[517, 447], [547, 467], [505, 517], [473, 498]] },
+            35: { points: [[401, 366], [433, 387], [387, 436], [356, 414]] },
+          },
+        },
+      }
+
+      const stageEl = document.getElementById('stage')
+      const canvasEl = document.getElementById('canvas')
+      const imgEl = document.getElementById('hall-img')
+      const svgEl = document.getElementById('overlay')
+      const panelEl = document.getElementById('panel')
+      const outputEl = document.getElementById('output')
+      const outputText = document.getElementById('output-text')
+
+      document.querySelectorAll('[data-hall]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          selectHall(Number(btn.dataset.hall))
+        })
+      })
+      document.getElementById('btn-export').addEventListener('click', exportTS)
+      document.getElementById('btn-reset').addEventListener('click', () => {
+        if (confirm('Сбросить все изменения в текущем зале?')) location.reload()
+      })
+      document.getElementById('btn-copy').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(outputText.value)
+          alert('Скопировано. Вставь Клоду в чат.')
+        } catch {
+          outputText.select()
+          document.execCommand('copy')
+          alert('Скопировано (fallback). Вставь Клоду в чат.')
+        }
+      })
+      document.getElementById('btn-close').addEventListener('click', () => {
+        outputEl.classList.remove('open')
+      })
+      document.getElementById('btn-snap').addEventListener('click', snapSelectedToBbox)
+      document.getElementById('btn-dup-up').addEventListener('click', () => dupVertex('up'))
+      document.getElementById('btn-dup-down').addEventListener('click', () => dupVertex('down'))
+
+      // Коорд-поля в панели
+      ;['p-x', 'p-y', 'p-w', 'p-h'].forEach((id) => {
+        document.getElementById(id).addEventListener('change', () => {
+          if (!state.selected) return
+          const t = state.layouts[state.hall][state.selected]
+          const bb = bboxOf(t)
+          const nx = Number(document.getElementById('p-x').value)
+          const ny = Number(document.getElementById('p-y').value)
+          const nw = Number(document.getElementById('p-w').value)
+          const nh = Number(document.getElementById('p-h').value)
+          const dx = nx - bb.x
+          const dy = ny - bb.y
+          const sx = nw / Math.max(1, bb.w)
+          const sy = nh / Math.max(1, bb.h)
+          if (t.points) {
+            t.points = t.points.map(([x, y]) => [
+              Math.round(bb.x + (x - bb.x) * sx + dx),
+              Math.round(bb.y + (y - bb.y) * sy + dy),
+            ])
+          } else {
+            t.cx = Math.round((t.cx - bb.x) * sx + bb.x + dx)
+            t.cy = Math.round((t.cy - bb.y) * sy + bb.y + dy)
+            t.rx = Math.max(6, Math.round(t.rx * sx))
+            t.ry = Math.max(6, Math.round(t.ry * sy))
+          }
+          render()
+        })
+      })
+
+      function selectHall(hall) {
+        state.hall = hall
+        state.selected = null
+        document.querySelectorAll('[data-hall]').forEach((b) => {
+          b.classList.toggle('active', Number(b.dataset.hall) === hall)
+        })
+        imgEl.src = HALL_IMG[hall]
+        imgEl.onload = () => {
+          // viewBox фиксирован 1448x1086 — как в TableMap.tsx
+          svgEl.setAttribute('viewBox', `0 0 ${VIEW_W} ${VIEW_H}`)
+          render()
+        }
+      }
+
+      function bboxOf(t) {
+        if (t.points) {
+          const xs = t.points.map(([x]) => x)
+          const ys = t.points.map(([, y]) => y)
+          const x = Math.min(...xs)
+          const y = Math.min(...ys)
+          const w = Math.max(...xs) - x
+          const h = Math.max(...ys) - y
+          return { x, y, w, h }
+        }
+        return { x: t.cx - t.rx, y: t.cy - t.ry, w: t.rx * 2, h: t.ry * 2 }
+      }
+
+      // Внутренние координаты в tables-layout.ts выражены в 1448x1086.
+      // PNG тоже 1448x1086 — координаты 1:1, без масштабирования.
+      function toImg(x, y) {
+        return [x, y]
+      }
+      function fromImg(x, y) {
+        return [x, y]
+      }
+
+      function render() {
+        const layout = state.layouts[state.hall]
+        const ns = 'http://www.w3.org/2000/svg'
+        svgEl.innerHTML = ''
+        for (const [num, t] of Object.entries(layout)) {
+          const g = document.createElementNS(ns, 'g')
+          g.dataset.num = num
+          if (t.points) {
+            const poly = document.createElementNS(ns, 'polygon')
+            poly.setAttribute(
+              'points',
+              t.points.map(([x, y]) => toImg(x, y).join(',')).join(' '),
+            )
+            poly.setAttribute('class', 'outline' + (String(num) === String(state.selected) ? ' selected' : ''))
+            poly.addEventListener('click', () => selectTable(num))
+            g.appendChild(poly)
+            t.points.forEach(([x, y], i) => {
+              const [ix, iy] = toImg(x, y)
+              const circle = document.createElementNS(ns, 'circle')
+              circle.setAttribute('cx', ix)
+              circle.setAttribute('cy', iy)
+              circle.setAttribute('r', 7)
+              circle.setAttribute('class', 'handle')
+              circle.dataset.kind = 'vertex'
+              circle.dataset.index = i
+              circle.addEventListener('pointerdown', (e) => startDrag(e, num, 'vertex', i))
+              circle.addEventListener('click', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                  // удалить
+                  const arr = layout[num].points
+                  if (arr.length > 3) {
+                    arr.splice(i, 1)
+                    render()
+                  }
+                }
+              })
+              g.appendChild(circle)
+            })
+            const c = centroid(t.points)
+            const [tx, ty] = toImg(c[0], c[1])
+            const num_el = document.createElementNS(ns, 'text')
+            num_el.setAttribute('x', tx)
+            num_el.setAttribute('y', ty + 6)
+            num_el.setAttribute('text-anchor', 'middle')
+            num_el.setAttribute('class', 'num')
+            num_el.textContent = num
+            g.appendChild(num_el)
+          } else {
+            const [cx, cy] = toImg(t.cx, t.cy)
+            const [rxi] = toImg(t.rx, 0)
+            const [, ryi] = toImg(0, t.ry)
+            const ell = document.createElementNS(ns, 'ellipse')
+            ell.setAttribute('cx', cx)
+            ell.setAttribute('cy', cy)
+            ell.setAttribute('rx', Math.abs(rxi))
+            ell.setAttribute('ry', Math.abs(ryi))
+            ell.setAttribute('class', 'outline' + (String(num) === String(state.selected) ? ' selected' : ''))
+            ell.addEventListener('click', () => selectTable(num))
+            g.appendChild(ell)
+
+            // центр
+            const center = document.createElementNS(ns, 'circle')
+            center.setAttribute('cx', cx)
+            center.setAttribute('cy', cy)
+            center.setAttribute('r', 7)
+            center.setAttribute('class', 'handle center')
+            center.dataset.kind = 'center'
+            center.addEventListener('pointerdown', (e) => startDrag(e, num, 'center'))
+            g.appendChild(center)
+            // rx хэндл (справа)
+            const rxH = document.createElementNS(ns, 'circle')
+            rxH.setAttribute('cx', cx + Math.abs(rxi))
+            rxH.setAttribute('cy', cy)
+            rxH.setAttribute('r', 6)
+            rxH.setAttribute('class', 'handle')
+            rxH.dataset.kind = 'rx'
+            rxH.addEventListener('pointerdown', (e) => startDrag(e, num, 'rx'))
+            g.appendChild(rxH)
+            // ry хэндл (снизу)
+            const ryH = document.createElementNS(ns, 'circle')
+            ryH.setAttribute('cx', cx)
+            ryH.setAttribute('cy', cy + Math.abs(ryi))
+            ryH.setAttribute('r', 6)
+            ryH.setAttribute('class', 'handle')
+            ryH.dataset.kind = 'ry'
+            ryH.addEventListener('pointerdown', (e) => startDrag(e, num, 'ry'))
+            g.appendChild(ryH)
+
+            const num_el = document.createElementNS(ns, 'text')
+            num_el.setAttribute('x', cx)
+            num_el.setAttribute('y', cy + 6)
+            num_el.setAttribute('text-anchor', 'middle')
+            num_el.setAttribute('class', 'num')
+            num_el.textContent = num
+            g.appendChild(num_el)
+          }
+          svgEl.appendChild(g)
+        }
+        syncPanel()
+      }
+
+      function centroid(points) {
+        let x = 0, y = 0
+        for (const [px, py] of points) { x += px; y += py }
+        return [x / points.length, y / points.length]
+      }
+
+      function selectTable(num) {
+        state.selected = num
+        render()
+      }
+
+      function syncPanel() {
+        if (!state.selected) { panelEl.style.display = 'none'; return }
+        const t = state.layouts[state.hall][state.selected]
+        if (!t) { panelEl.style.display = 'none'; return }
+        panelEl.style.display = 'block'
+        document.getElementById('p-num').textContent = state.selected
+        const bb = bboxOf(t)
+        document.getElementById('p-x').value = Math.round(bb.x)
+        document.getElementById('p-y').value = Math.round(bb.y)
+        document.getElementById('p-w').value = Math.round(bb.w)
+        document.getElementById('p-h').value = Math.round(bb.h)
+      }
+
+      // Drag
+      function startDrag(e, num, kind, index) {
+        e.preventDefault()
+        e.stopPropagation()
+        state.drag = { num, kind, index }
+        state.selected = num
+        const move = (ev) => {
+          const [ix, iy] = imagePoint(ev)
+          const [vx, vy] = fromImg(ix, iy)
+          const t = state.layouts[state.hall][num]
+          if (kind === 'vertex') {
+            t.points[index] = [Math.round(vx), Math.round(vy)]
+          } else if (kind === 'center') {
+            const dx = Math.round(vx) - t.cx
+            const dy = Math.round(vy) - t.cy
+            t.cx += dx; t.cy += dy
+          } else if (kind === 'rx') {
+            t.rx = Math.max(6, Math.round(Math.abs(vx - t.cx)))
+          } else if (kind === 'ry') {
+            t.ry = Math.max(6, Math.round(Math.abs(vy - t.cy)))
+          }
+          render()
+        }
+        const up = () => {
+          state.drag = null
+          window.removeEventListener('pointermove', move)
+          window.removeEventListener('pointerup', up)
+        }
+        window.addEventListener('pointermove', move)
+        window.addEventListener('pointerup', up, { once: true })
+      }
+
+      function imagePoint(ev) {
+        // Пересчитываем клик в координаты viewBox (1448x1086)
+        // независимо от размера окна/экрана
+        const rect = svgEl.getBoundingClientRect()
+        const x = ((ev.clientX - rect.left) / rect.width) * VIEW_W
+        const y = ((ev.clientY - rect.top) / rect.height) * VIEW_H
+        return [x, y]
+      }
+
+      function dupVertex(dir) {
+        if (!state.selected) return
+        const t = state.layouts[state.hall][state.selected]
+        if (!t.points) return
+        const i = t.points.length - 1
+        const last = t.points[i]
+        const cp = [last[0], last[1] + (dir === 'up' ? -20 : 20)]
+        t.points.push([Math.round(cp[0]), Math.round(cp[1])])
+        render()
+      }
+
+      function snapSelectedToBbox() {
+        if (!state.selected) return
+        const t = state.layouts[state.hall][state.selected]
+        if (!t.points) return
+        const bb = bboxOf(t)
+        t.points = [
+          [bb.x, bb.y],
+          [bb.x + bb.w, bb.y],
+          [bb.x + bb.w, bb.y + bb.h],
+          [bb.x, bb.y + bb.h],
+        ]
+        render()
+      }
+
+      function exportTS() {
+        const lines = []
+        for (const hall of [1, 2, 3]) {
+          const name = `hall${hall}Layout`
+          lines.push(`const ${name}: Record<number, Geo> = {`)
+          for (const [num, t] of Object.entries(state.layouts[hall])) {
+            const bb = bboxOf(t)
+            if (t.points) {
+              const pts = t.points.map(([x, y]) => `[${x}, ${y}]`).join(', ')
+              lines.push(`  ${num}: { x: ${Math.round(bb.x)}, y: ${Math.round(bb.y)}, w: ${Math.round(bb.w)}, h: ${Math.round(bb.h)}, points: [${pts}] },`)
+            } else {
+              lines.push(`  ${num}: { x: ${Math.round(bb.x)}, y: ${Math.round(bb.y)}, w: ${Math.round(bb.w)}, h: ${Math.round(bb.h)}, shape: 'round' },`)
+            }
+          }
+          lines.push('}')
+          lines.push('')
+        }
+        outputText.value = lines.join('\n')
+        outputEl.classList.add('open')
+      }
+
+      // Запуск
+      selectHall(1)
+    </script>
+  </body>
+</html>

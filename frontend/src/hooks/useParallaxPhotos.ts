@@ -34,9 +34,17 @@ export function useParallaxPhotos(selector = '.parallax-photo') {
     const visible = new Set<HTMLElement>()
     let rafId = 0
     let pending = false
+    let frameCount = 0
 
     const update = () => {
       pending = false
+      frameCount++
+      /* Throttle: обновляем CSS-переменные каждый 2-й frame (30fps
+         вместо 60fps). Parallax-эффект деликатный, 30fps достаточно
+         для плавности, но вдвое дешевле по getBoundingClientRect. */
+      if (frameCount % 2 !== 0) {
+        return
+      }
       const vh = window.innerHeight || 1
       const vCenter = vh / 2
       visible.forEach((el) => {

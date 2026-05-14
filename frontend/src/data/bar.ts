@@ -279,7 +279,7 @@ export const barMenu: BarCategory[] = [
       { group: 'Кофе', title: 'Эспрессо', volume: '30 мл', price: 156, image: '/assets/bar/hot-coffee.webp' },
 
       { group: 'Десерты', title: 'Чизкейк', volume: '130 г', price: 256, image: '/assets/bar/hot-coffee.webp' },
-      { group: 'Десерты', title: 'Бельгийская вафля', volume: '160 г', price: 396, image: '/assets/bar/hot-coffee.webp' },
+      { group: 'Десерты', title: 'Бельгийская вафля', volume: '160 г', price: 396, image: '/assets/menu/Vaflya-so-smorodinoy.webp' },
       { group: 'Десерты', title: 'Панна-котта', volume: '120 г', price: 336, image: '/assets/bar/hot-coffee.webp' },
     ],
   },

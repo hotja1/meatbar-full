@@ -13,6 +13,11 @@ let lastFrameNow = 0
 const frameSamples: number[] = []
 const subscribers = new Set<Subscriber>()
 
+/* C7: Staggered resume — при возврате на вкладку не запускаем все
+   canvas разом. Первые 600ms после visibility=visible пропускаем
+   подписчиков по одному с интервалом, чтобы GPU не получил burst. */
+let resumeTs = 0
+
 function computeFps(now: number) {
   if (!lastFrameNow) {
     lastFrameNow = now
@@ -36,8 +41,36 @@ function loop(now: number) {
   lastNow = now
   const fps = computeFps(now)
   const tick: RafTick = { now, dt, fps }
-  for (const sub of subscribers) sub(tick)
+
+  // C7: staggered resume — limit active subscribers during first 600ms after tab return
+  const sinceResume = now - resumeTs
+  if (sinceResume < 600 && resumeTs > 0) {
+    // Allow progressively more subscribers each 150ms
+    const allowedCount = Math.min(subscribers.size, Math.floor(sinceResume / 150) + 1)
+    let i = 0
+    for (const sub of subscribers) {
+      if (i >= allowedCount) break
+      sub(tick)
+      i++
+    }
+  } else {
+    for (const sub of subscribers) sub(tick)
+  }
+
   rafId = requestAnimationFrame(loop)
+}
+
+// Track tab visibility for staggered resume
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      resumeTs = performance.now()
+      // Reset timing so first frame after resume doesn't have huge dt
+      lastNow = 0
+      lastFrameNow = 0
+      frameSamples.length = 0
+    }
+  })
 }
 
 export function subscribeRaf(sub: Subscriber) {
@@ -61,4 +94,3 @@ export function subscribeRaf(sub: Subscriber) {
     }
   }
 }
-

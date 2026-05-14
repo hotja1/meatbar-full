@@ -16,7 +16,7 @@
  * для /assets/*-HASH.* — это уже immutable).
  */
 
-const VERSION = 'v26'
+const VERSION = 'v27'
 const CACHE_NAME = `meatbar-pwa-${VERSION}`
 const RUNTIME_CACHE = `meatbar-runtime-${VERSION}`
 const IMAGE_CACHE = `meatbar-images-${VERSION}`

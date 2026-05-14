@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Test menu render</title>
+<style>
+body { background: #120d0a; color: #f6eee1; font-family: system-ui; padding: 20px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-width: 400px; }
+.card { border: 1px solid rgba(224,166,75,0.3); border-radius: 10px; padding: 8px; background: rgba(18,13,10,0.6); }
+.title { font-size: 12px; font-weight: 700; }
+.price { font-size: 13px; font-weight: 800; color: #e0a64b; }
+</style>
+</head><body>
+<h2>Тест рендера меню</h2>
+<div id="out">Загрузка...</div>
+<script type="module">
+fetch('/api/menu')
+  .then(r => r.json())
+  .then(data => {
+    const items = data.flatMap(cat => cat.items.map(i => ({title: i.title, price: i.price, image: i.image})))
+    const grid = document.createElement('div')
+    grid.className = 'grid'
+    items.slice(0, 10).forEach(item => {
+      const card = document.createElement('div')
+      card.className = 'card'
+      card.innerHTML = `<div class="title">${item.title}</div><div class="price">${item.price} ₽</div>`
+      grid.appendChild(card)
+    })
+    document.getElementById('out').replaceWith(grid)
+  })
+  .catch(e => { document.getElementById('out').textContent = 'Error: ' + e.message })
+</script>
+</body></html>

@@ -19,37 +19,26 @@
   background: rgba(16, 12, 9, 0.72);
 }
 
-.floorplan-tabs button {
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: rgba(246, 238, 225, 0.72);
-  padding: 9px 14px;
-  cursor: pointer;
+/* FireButton внутри floorplan-tabs */
+.floorplan-tabs .floorplan-tab-btn {
+  flex: 1;
+  min-width: 180px;
+  padding: 12px 16px;
   display: grid;
   gap: 2px;
   text-align: left;
 }
 
-.floorplan-tabs button:hover {
-  color: #fff;
-}
-
-.floorplan-tabs button.active {
-  color: #fff;
-  background: linear-gradient(135deg, #ef1d2d, #8d0d13);
-  box-shadow: 0 8px 20px rgba(239, 29, 45, 0.35);
-}
-
-.floorplan-tabs button span {
+.floorplan-tabs .floorplan-tab-btn span {
   font-size: 13px;
   font-weight: 800;
 }
 
-.floorplan-tabs button small {
+.floorplan-tabs .floorplan-tab-btn small {
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  opacity: 0.7;
   color: rgba(246, 238, 225, 0.7);
 }
 
@@ -57,20 +46,41 @@
   position: relative;
   border-radius: 20px;
   border: 1px solid rgba(224, 166, 75, 0.32);
-  overflow: hidden;
-  background: linear-gradient(180deg, #7f5a39 0%, #8a6342 100%);
+  background: #1d1510;
   box-shadow: 0 24px 56px rgba(0, 0, 0, 0.45);
 }
 
-.floor-svg {
+.floor-map-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  contain: layout paint style;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.floor-map-wrapper img {
   display: block;
   width: 100%;
   height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: contrast(1.07) saturate(1.1) brightness(1.08);
+}
+
+.floor-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 .floor-table {
   cursor: pointer;
   outline: none;
+  pointer-events: all;
 }
 
 .floor-table-hit {
@@ -83,21 +93,49 @@
   stroke: rgba(245, 201, 120, 0.58);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 0.9;
+  stroke-width: 1.6;
   vector-effect: non-scaling-stroke;
   pointer-events: none;
+  transition: fill 160ms ease, stroke 160ms ease;
 }
 
+/* Пост-задача: по умолчанию контур уже окрашен по статусу (free/reserved/held)
+   и имеет лёгкую заливку, чтобы пользователь сразу видел,
+   какие столы свободны, не дожидаясь клика. */
+
 .floor-table-outline-free {
-  stroke: rgba(123, 214, 141, 0.72);
+  stroke: rgba(123, 214, 141, 0.95);
+  fill: rgba(123, 214, 141, 0.16);
 }
 
 .floor-table-outline-reserved {
-  stroke: rgba(247, 150, 130, 0.72);
+  stroke: rgba(247, 150, 130, 0.9);
+  fill: rgba(247, 150, 130, 0.14);
 }
 
 .floor-table-outline-held {
-  stroke: rgba(245, 201, 120, 0.72);
+  stroke: rgba(245, 201, 120, 0.92);
+  fill: rgba(245, 201, 120, 0.14);
+}
+
+.floor-table:hover .floor-table-outline-free {
+  fill: rgba(123, 214, 141, 0.26);
+  stroke-width: 2.1;
+}
+
+.floor-table:active .floor-table-outline-free {
+  fill: rgba(123, 214, 141, 0.35);
+  stroke-width: 2.4;
+}
+
+.floor-table:hover .floor-table-outline-reserved {
+  fill: rgba(247, 150, 130, 0.22);
+  stroke-width: 2.1;
+}
+
+.floor-table:hover .floor-table-outline-held {
+  fill: rgba(245, 201, 120, 0.22);
+  stroke-width: 2.1;
 }
 
 .floor-table-highlight {
@@ -260,7 +298,7 @@
     flex-wrap: wrap;
   }
 
-  .floorplan-tabs button {
+  .floorplan-tabs .floorplan-tab-btn {
     flex: 1;
     min-width: 220px;
   }
@@ -269,5 +307,79 @@
 @media (hover: none) {
   .floor-tooltip {
     display: none;
+  }
+}
+
+
+/* Mobile tap-to-preview card — shown below the map on first tap */
+.floorplan-preview {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(224, 166, 75, 0.32);
+  background: rgba(28, 18, 12, 0.92);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  animation: floorplan-preview-in 180ms ease-out;
+}
+
+@keyframes floorplan-preview-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.floorplan-preview__photo {
+  width: 72px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(224, 166, 75, 0.2);
+}
+
+.floorplan-preview__body {
+  display: grid;
+  gap: 2px;
+  color: #fff3db;
+  font-size: 12px;
+}
+
+.floorplan-preview__body strong {
+  font-size: 14px;
+}
+
+.floorplan-preview__meta {
+  color: rgba(246, 238, 225, 0.76);
+}
+
+.floorplan-preview__noise {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.floorplan-preview__noise--quiet { color: #a8e0b6; }
+.floorplan-preview__noise--moderate { color: #f3c478; }
+.floorplan-preview__noise--lively { color: #ff8a4f; }
+
+.floorplan-preview__status {
+  font-size: 11px;
+}
+
+.floorplan-preview__status--free { color: #5ddd8a; }
+.floorplan-preview__status--reserved { color: #f59f95; }
+.floorplan-preview__status--held { color: #f3c478; }
+
+.floorplan-preview__btn {
+  padding: 8px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floorplan-preview {
+    animation: none;
   }
 }

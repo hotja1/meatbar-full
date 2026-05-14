@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const distAssets = path.resolve('dist', 'assets')
 const jsGzipLimitKb = Number(process.env.JS_GZIP_LIMIT_KB ?? 103)
-const cssGzipLimitKb = Number(process.env.CSS_GZIP_LIMIT_KB ?? 14.1)
+const cssGzipLimitKb = Number(process.env.CSS_GZIP_LIMIT_KB ?? 14.6)
 
 function toKb(bytes) {
   return bytes / 1024

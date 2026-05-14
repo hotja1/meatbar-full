@@ -30,6 +30,9 @@ export type Booking = {
   name: string
   phone: string
   comment?: string
+  preOrder?: Array<{ title: string; qty: number; price: number }>
+  paymentMethod?: 'none' | 'online'
+  paymentStatus?: 'none' | 'pending' | 'paid'
   status?: 'pending' | 'confirmed' | 'cancelled' | 'arrived'
   createdAt?: string
 }

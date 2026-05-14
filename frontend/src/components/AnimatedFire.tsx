@@ -30,6 +30,42 @@ type AnimatedFireProps = {
   ariaLabel?: string
 }
 
+/*
+ * P1.1 — Pre-baked radial-gradient cache shared across AnimatedFire
+ * instances. Header has 1 instance but it paints many particles per
+ * frame; replacing per-frame createRadialGradient with drawImage is
+ * a meaningful paint-time win.
+ */
+const AF_RING_COUNT = 12
+const AF_SPRITE_R = 28
+let afRingCache: HTMLCanvasElement[] | null = null
+let afRingDpr = 0
+
+function getAfRingCache(dpr: number): HTMLCanvasElement[] {
+  if (afRingCache && afRingDpr === dpr) return afRingCache
+  const list: HTMLCanvasElement[] = []
+  const r = AF_SPRITE_R * dpr
+  for (let i = 0; i < AF_RING_COUNT; i++) {
+    // hue range 18..42 covers red→yellow flame palette used here
+    const hue = 18 + ((42 - 18) * i) / (AF_RING_COUNT - 1)
+    const c = document.createElement('canvas')
+    c.width = r * 2
+    c.height = r * 2
+    const g = c.getContext('2d')
+    if (!g) continue
+    const grad = g.createRadialGradient(r, r, 0, r, r, r)
+    grad.addColorStop(0, `hsla(${hue}, 100%, 60%, 1)`)
+    grad.addColorStop(0.4, `hsla(${hue - 8}, 100%, 45%, 0.55)`)
+    grad.addColorStop(1, 'rgba(0,0,0,0)')
+    g.fillStyle = grad
+    g.fillRect(0, 0, r * 2, r * 2)
+    list.push(c)
+  }
+  afRingCache = list
+  afRingDpr = dpr
+  return list
+}
+
 /**
  * Premium canvas-based animated fire — additive-blend particles
  * with smoke, sparks and pulsing core. Uses requestAnimationFrame
@@ -57,6 +93,9 @@ export function AnimatedFire({
     canvas.style.width = `${width}px`
     canvas.style.height = `${height}px`
     ctx.scale(dpr, dpr)
+
+    // P1.1 — shared ring-gradient sprites, built once per DPR.
+    const rings = getAfRingCache(dpr)
 
     const particles: Particle[] = []
     const sparks: Spark[] = []
@@ -93,16 +132,13 @@ export function AnimatedFire({
         const y = baseY - 10 - Math.random() * height * 0.55
         const radius = 3 + Math.random() * 6
         const alpha = 0.35 + Math.random() * 0.35
-        const hue = 18 + Math.random() * 24
-        const lightness = 60 - Math.random() * 18
-        const grad = ctx.createRadialGradient(x, y, 0, x, y, radius)
-        grad.addColorStop(0, `hsla(${hue}, 100%, ${lightness}%, ${alpha})`)
-        grad.addColorStop(0.5, `hsla(${hue - 8}, 100%, ${Math.max(20, lightness - 15)}%, ${alpha * 0.55})`)
-        grad.addColorStop(1, 'rgba(0,0,0,0)')
-        ctx.fillStyle = grad
-        ctx.beginPath()
-        ctx.arc(x, y, radius, 0, Math.PI * 2)
-        ctx.fill()
+        const hueIdx = Math.floor(Math.random() * AF_RING_COUNT)
+        const sprite = rings[hueIdx]
+        if (sprite) {
+          ctx.globalAlpha = alpha
+          ctx.drawImage(sprite, x - radius, y - radius, radius * 2, radius * 2)
+          ctx.globalAlpha = 1
+        }
       }
       ctx.globalCompositeOperation = 'source-over'
     }
@@ -131,14 +167,33 @@ export function AnimatedFire({
       })
     }
 
-    const FRAME_INTERVAL = 1000 / 30
+    const FRAME_INTERVAL = 1000 / 24
+    // P1.3 — throttle down to 12 fps when user scrolled below the hero.
+    // The header's AnimatedFire is always technically on-screen
+    // (sticky header), so IntersectionObserver alone can't slow it.
+    // We read window.scrollY inside the tick (cheap) and bump the
+    // interval when the hero is no longer visible.
+    const FRAME_INTERVAL_SLOW = 1000 / 12
+    // A1: Ещё медленнее когда далеко от hero (>2vh) — почти стоп-кадр
+    const FRAME_INTERVAL_CRAWL = 1000 / 6
     let lastFrame = 0
+    let scrolledPastHero = false
+    let scrolledFarFromHero = false
+    const updateScrollFlag = () => {
+      // "Past hero" ≈ scrolled more than 70% of viewport height.
+      scrolledPastHero = window.scrollY > window.innerHeight * 0.7
+      // "Far from hero" ≈ scrolled more than 2 viewport heights.
+      scrolledFarFromHero = window.scrollY > window.innerHeight * 2
+    }
+    updateScrollFlag()
+    window.addEventListener('scroll', updateScrollFlag, { passive: true })
 
     const tick = (time: number) => {
       if (!visible) {
         return
       }
-      if (time - lastFrame < FRAME_INTERVAL) {
+      const interval = scrolledFarFromHero ? FRAME_INTERVAL_CRAWL : scrolledPastHero ? FRAME_INTERVAL_SLOW : FRAME_INTERVAL
+      if (time - lastFrame < interval) {
         return
       }
       lastFrame = time
@@ -177,16 +232,17 @@ export function AnimatedFire({
         p.vx *= 0.985
         const radius = p.size * (1 - t * 0.4)
         const alpha = (1 - t) * 0.85
-        const hue = p.hue + t * 6
-        const lightness = 60 - t * 40
-        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius)
-        grad.addColorStop(0, `hsla(${hue}, 100%, ${lightness}%, ${alpha})`)
-        grad.addColorStop(0.4, `hsla(${hue - 8}, 100%, ${Math.max(20, lightness - 15)}%, ${alpha * 0.55})`)
-        grad.addColorStop(1, 'rgba(0,0,0,0)')
-        ctx.fillStyle = grad
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2)
-        ctx.fill()
+        // P1.1 — pick pre-baked sprite by hue bin and blit.
+        const bin = Math.min(
+          AF_RING_COUNT - 1,
+          Math.max(0, Math.floor(((p.hue - 18) / 24) * AF_RING_COUNT)),
+        )
+        const sprite = rings[bin]
+        if (sprite) {
+          ctx.globalAlpha = alpha
+          ctx.drawImage(sprite, p.x - radius, p.y - radius, radius * 2, radius * 2)
+          ctx.globalAlpha = 1
+        }
       }
 
       // Sparks
@@ -214,6 +270,7 @@ export function AnimatedFire({
       renderStill()
       return () => {
         observer.disconnect()
+        window.removeEventListener('scroll', updateScrollFlag)
       }
     }
 
@@ -221,6 +278,7 @@ export function AnimatedFire({
     return () => {
       unsubscribe?.()
       observer.disconnect()
+      window.removeEventListener('scroll', updateScrollFlag)
     }
   }, [width, height, intensity])
 

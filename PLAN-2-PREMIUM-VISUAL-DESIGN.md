@@ -597,3 +597,30 @@ content-visibility, AVIF).
 - [x] Booking map precision pass completed: perspective tables now use individual SVG polygon contours, round tables use oval/ellipse geometry, and free-table outlines are thinner with non-scaling strokes to avoid heavy visual noise and scroll cost.
 - [x] Hall badge logo switched to the active white brand mark used in the site header/splash (`meatbar-logo-mark.webp`); Hall 2/3 top masks reduced so they do not cover embedded hall labels such as kitchen/open-grill text.
 - [x] Old button-like zones removed from the booking map layer; every visible status contour is now a dedicated tabletop polygon/ellipse tuned per table, not a reused generic button shape.
+- [x] All three halls received an extra manual tabletop-perimeter tuning pass: contours now use the same status color system as before (green = free, red = reserved, yellow = held) and remain attached to the clickable table geometry.
+
+## UPDATE 2026-05-12 (pass 8 — menu dish-card визуальный паритет с bar-card)
+
+- [x] Меню: `.dish-card` переведён на тот же визуальный язык, что `.bar-card`:
+  - двойной `box-shadow` — чёрная глубина + warm ember glow на hover,
+  - tilt 3D через CSS-переменные `--bx/--by/--hover` + pointer-move handler в мемоизируемом `DishCard` компоненте,
+  - warm radial gradient на `picture::after`, меняет позицию вслед за курсором,
+  - photo parallax: `scale(1.04+hover*0.06)` + `translate3d(bx,by,0)` + `filter: saturate/brightness`,
+  - dotted leader-line в футере между ценой и кнопкой добавления.
+- [x] Tilt отключён на mobile / `prefers-reduced-motion` / `data-perf='low'` — consistent с bar-card. Тач-отклик через `:active scale(0.97)`.
+- [x] `data-perf='mid'/'low'` overrides для `.dish-card` `box-shadow` (упрощённые тени).
+- [x] `.menu-tabs` скрытый scrollbar — убирает видимую полосу прокрутки при клике +/- по позициям (`scrollbar-width: none` + `::-webkit-scrollbar { display: none }` по образцу `.bar-tabs`).
+- [x] CSS cleanup — удалены мёртвые селекторы старых версий компонент, не используемых в TSX (booking-form/cart-panel/table-point/zone-* и т.д.). CSS.gz 14.09 → 13.22 KB без визуальной регрессии (классов не было в разметке).
+- Бизнес-логика и структура меню НЕ затронуты: категории, сайдбар, grid 2 столбца, `<article.dish-card>` семантика, порядок `picture → span → h4 → p → footer`, обработчики `addToCart/incrementCart/decrementCart` — всё сохранено 1-в-1.
+- Мобильная версия: описания блюд сохранены (`<p>{item.description}</p>` с `-webkit-line-clamp: 3` на ≤920 px). Структура мобильной вёрстки меню и бара осталась разной (меню: spans/h4/p, бар: tags/title/desc/price-row) — как и было.
+
+
+## UPDATE 2026-05-12 (pass 9 — price-line parity + perf optimization)
+
+- [x] Dish-card price-line переведён на формат bar-card: `вес · · · · цена ₽` (dotted leader-row). Дублирующийся eyebrow-weight убран.
+- [x] Мобильный touch-эффект: `@media (hover: none) { .dish-card:active, .bar-card:active { --hover: 1 } }` — glow + shadow + zoom при тапе без pointer-move handlers (без лагов скролла). Работает в PWA и мобильных браузерах.
+- [x] `will-change: transform` убран с `.dish-card img`, `.parallax-photo img`, `.bar-card-photo img` — снижает количество GPU-слоёв при 20+ карточках на экране.
+- [x] `contain: layout paint style` добавлен на `.dish-card` и `.bar-card` — изолирует re-layout.
+- [x] `useParallaxPhotos` — frame-skip (обновление каждый 2-й frame, 30fps вместо 60fps).
+- [x] `AnimatedFire` — FPS снижен с 30 до 24 (шапка 96×96, разница незаметна).
+- Визуал полностью сохранён: все эффекты (tilt, glow, photo-zoom, dotted leader, double shadow) работают как прежде.

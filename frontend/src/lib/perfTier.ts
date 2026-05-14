@@ -50,3 +50,38 @@ export function applyPerfTierAttribute() {
   document.documentElement.dataset.perf = tier
 }
 
+/*
+ * Task G36 — динамически пересчитывает `data-perf` при реальной смене
+ * условий: `navigator.connection.change` (4G → 2G при переходе в
+ * метро/пригород), смена `prefers-reduced-motion` или ориентации
+ * экрана. Возвращает cleanup-функцию.
+ */
+export function installPerfTierReactivity(): () => void {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return () => {}
+
+  const refresh = () => {
+    const tier = detectPerfTier()
+    if (document.documentElement.dataset.perf !== tier) {
+      document.documentElement.dataset.perf = tier
+    }
+  }
+
+  const conn = (navigator as Navigator & {
+    connection?: EventTarget & { saveData?: boolean; effectiveType?: string }
+  }).connection
+  conn?.addEventListener?.('change', refresh)
+
+  const mqReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+  const mqMobile = window.matchMedia?.('(max-width: 768px)')
+  /* Safari < 14 поддерживает только deprecated addListener; современные
+     браузеры — addEventListener. Обработчик универсален. */
+  mqReduced?.addEventListener?.('change', refresh)
+  mqMobile?.addEventListener?.('change', refresh)
+
+  return () => {
+    conn?.removeEventListener?.('change', refresh)
+    mqReduced?.removeEventListener?.('change', refresh)
+    mqMobile?.removeEventListener?.('change', refresh)
+  }
+}
+

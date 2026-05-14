@@ -94,19 +94,37 @@ footer[id] {
   justify-content: space-between;
   width: min(1180px, calc(100% - 28px));
   padding: 10px 12px;
-  border: 1px solid rgba(255, 244, 226, 0.13);
-  border-radius: 999px;
-  background: rgba(10, 7, 5, 0.7);
-  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.34);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   transform: translateX(-50%);
-  backdrop-filter: blur(22px);
+  backdrop-filter: none;
+}
+
+.site-header .header-burger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 244, 226, 0.16);
+  border-radius: 12px;
+  background: rgba(10, 7, 5, 0.5);
+  color: var(--cream, #f6eee1);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.site-header .header-burger:hover {
+  background: rgba(255, 110, 40, 0.18);
+  border-color: rgba(255, 110, 40, 0.45);
 }
 
 .brand,
 .header-call,
 .primary-link,
 .secondary-link,
-.contact-cards a,
 footer a {
   display: inline-flex;
   align-items: center;
@@ -125,34 +143,33 @@ footer a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 46px;
-  isolation: isolate;
+  height: 104px;
+  margin-left: 14px;
+  mix-blend-mode: lighten;
 }
 
 .brand-fire-logo--mark .brand-fire-flame {
-  /* Wider, softer flame that BURNS BEHIND the bull mark instead of
-     covering it. Sits a touch lower so the tip just peeks above the
-     horns, while warm halo glows around the silhouette. */
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 96px;
-  height: 96px;
+  width: 170px;
+  height: 170px;
   transform: translate(-50%, -52%);
   z-index: 0;
   pointer-events: none;
   mix-blend-mode: screen;
   filter: blur(1.2px) saturate(1.15);
   opacity: 0.62;
+  border-radius: 50%;
 }
 
 .brand-fire-logo--mark img {
   width: auto;
-  height: 46px;
-  max-width: 160px;
+  height: 104px;
+  max-width: 320px;
   position: relative;
   z-index: 2;
-  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.42));
+  clip-path: inset(4px 2px 4px 2px round 4px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -166,6 +183,13 @@ footer a {
     width: 78px;
     height: 84px;
     opacity: 0.55;
+  }
+  .brand-fire-logo--mark {
+    height: 56px;
+  }
+  .brand-fire-logo--mark img {
+    height: 56px;
+    max-width: 160px;
   }
 }
 
@@ -187,59 +211,32 @@ footer a {
   color: var(--cream);
 }
 
-.header-call,
-.primary-link {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
+/* Nav hover hints — подсказки под кнопками навигации */
+.nav-hint {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 10px;
+  text-transform: none;
+  color: rgba(255, 244, 226, 0.8);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.header-nav-desktop a:hover .nav-hint { opacity: 1; }
+
+/* header-call теперь использует fire-btn классы напрямую */
+.header-call {
   min-height: 48px;
   padding: 0 22px;
-  border: 0;
-  border-radius: 999px;
-  color: #fff;
-  font-weight: 900;
-  background: linear-gradient(135deg, #ef1d2d, #8d0d13);
-  box-shadow: 0 14px 40px rgba(224, 22, 32, 0.34);
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
-.header-call::before,
-.primary-link::before,
-.dish-card button::before,
-.featured-dish button::before,
-.cart-line button::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  inset: auto 12% -46% 12%;
-  height: 88%;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, rgba(255, 236, 151, 0.92) 0 8%, rgba(255, 128, 43, 0.78) 22%, rgba(228, 22, 39, 0.16) 54%, transparent 72%);
-  filter: blur(10px);
-  opacity: 0;
-  transform: translateY(14px) scale(0.76);
-  transition: opacity 0.22s ease, transform 0.22s ease;
-}
-
-.header-call:hover::before,
-.primary-link:hover::before,
-.dish-card button:hover::before,
-.featured-dish button:hover::before,
-.cart-line button:hover::before {
-  opacity: 1;
-  transform: translateY(-3px) scale(1.12);
-  animation: buttonFire 0.9s ease-in-out infinite alternate;
-}
-
-.header-call:hover,
-.primary-link:hover,
 .secondary-link:hover {
   transform: translateY(-2px);
-}
-
-.primary-link:hover {
-  box-shadow: 0 18px 54px rgba(224, 22, 32, 0.52);
 }
 
 .secondary-link {
@@ -250,16 +247,6 @@ footer a {
   color: var(--cream);
   font-weight: 900;
   background: rgba(255, 244, 226, 0.08);
-}
-
-.mobile-menu {
-  display: none;
-  width: 46px;
-  height: 46px;
-  border: 1px solid rgba(255, 244, 226, 0.14);
-  border-radius: 50%;
-  color: var(--cream);
-  background: rgba(255, 244, 226, 0.06);
 }
 
 
@@ -299,18 +286,16 @@ footer img {
   filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.32));
 }
 
-/* iter5: «живой» 3D-tilt для логотипа и фото в split-story.
+/* iter5: «живой» 3D-tilt для логотипа в split-story.
    Анимация управляется CSS-переменными --bx/--by (-1..1)
    которые ставит React onPointerMove. Работает и на тач-устройствах. */
-.split-live-logo,
-.split-live-photo {
+.split-live-logo {
   position: relative;
   display: block;
   perspective: 1000px;
   --bx: 0;
   --by: 0;
   transition: transform 220ms ease;
-  will-change: transform;
 }
 .split-live-logo .split-logo-mark {
   transform:
@@ -323,27 +308,10 @@ footer img {
   filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.32))
           drop-shadow(calc(var(--bx) * 6px) calc(var(--by) * 6px) 12px rgba(255, 138, 64, 0.15));
 }
-.split-live-photo {
-  border-radius: 28px;
-  overflow: hidden;
-}
-.split-live-logo picture,
-.split-live-photo picture {
+.split-live-logo picture {
   display: block;
 }
-.split-live-photo > img,
-.split-live-photo > picture > img {
-  transform:
-    rotateX(calc(var(--by) * -4deg))
-    rotateY(calc(var(--bx) * 5deg))
-    scale(1.04);
-  transform-origin: 50% 50%;
-  transition: transform 260ms ease, filter 260ms ease;
-  filter: brightness(calc(1 + var(--bx) * 0.04 + var(--by) * 0.02))
-          saturate(1.05);
-}
-.split-live-logo-glow,
-.split-live-photo-glow {
+.split-live-logo-glow {
   pointer-events: none;
   position: absolute;
   inset: 0;
@@ -359,13 +327,10 @@ footer img {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .split-live-logo .split-logo-mark,
-  .split-live-photo > img,
-  .split-live-photo > picture > img {
+  .split-live-logo .split-logo-mark {
     transform: none !important;
   }
-  .split-live-logo-glow,
-  .split-live-photo-glow {
+  .split-live-logo-glow {
     opacity: 0 !important;
   }
 }
@@ -388,8 +353,7 @@ footer img {
     radial-gradient(circle at 22% 70%, rgba(255, 139, 43, 0.22), transparent 18%),
     radial-gradient(circle at 76% 28%, rgba(228, 22, 39, 0.2), transparent 20%);
   filter: blur(20px);
-  opacity: 0.8;
-  animation: fireGlow 5s ease-in-out infinite alternate;
+  opacity: 0.65;
 }
 
 .film-grain,
@@ -451,7 +415,6 @@ footer img {
   background: var(--coal);
   /* Slight zoom so the 9:16 source fills wide screens without crop bars */
   transform: scale(1.06);
-  will-change: transform;
 }
 
 .hero-reel--still {
@@ -543,7 +506,7 @@ footer img {
 .hero-content h1,
 .section-intro h2,
 .split-panel h2,
-.contacts-section h2 {
+.menu-hero__content h2 {
   margin: 0;
   color: var(--cream);
   font-size: clamp(48px, 8vw, 124px);
@@ -584,7 +547,7 @@ footer img {
     radial-gradient(circle at 22% 70%, rgba(255, 139, 43, 0.16), transparent 18%),
     radial-gradient(circle at 76% 28%, rgba(228, 22, 39, 0.16), transparent 20%);
   filter: blur(20px);
-  animation: fireGlow 5s ease-in-out infinite alternate;
+  opacity: 0.6;
 }
 
 .jobs-card h2 {
@@ -606,7 +569,6 @@ footer img {
 .interactive-tools,
 .menu-section,
 .booking-section,
-.contacts-section,
 footer {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
@@ -652,21 +614,29 @@ footer {
   overflow: hidden;
   border: 1px solid rgba(255, 244, 226, 0.13);
   border-radius: 36px;
-  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.34);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
   transform: translateY(var(--lift));
   transition:
     flex 0.4s ease,
     transform 0.4s ease,
     filter 0.4s ease;
+  contain: layout paint style;
 }
 
-.culture-wheel:hover .culture-tile {
-  filter: saturate(0.72) brightness(0.74);
+@media (hover: hover) {
+  .culture-wheel:hover .culture-tile {
+    filter: saturate(0.72) brightness(0.74);
+  }
+
+  .culture-wheel .culture-tile:hover {
+    filter: saturate(1.18) brightness(1);
+    transform: translateY(calc(var(--lift) - 18px)) scale(1.025);
+  }
 }
 
-.culture-wheel .culture-tile:hover {
-  filter: saturate(1.18) brightness(1);
-  transform: translateY(calc(var(--lift) - 18px)) scale(1.025);
+.culture-tile:active {
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 
 .culture-tile img {
@@ -678,8 +648,10 @@ footer {
   transition: transform 0.8s ease;
 }
 
-.culture-tile:hover img {
-  transform: scale(1.16);
+@media (hover: hover) {
+  .culture-tile:hover img {
+    transform: scale(1.16);
+  }
 }
 
 .culture-tile picture {
@@ -734,10 +706,9 @@ footer {
 }
 
 .interactive-tools {
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 28px;
-  align-items: stretch;
+  display: block;
+  /* Разрешаем venue-slider выходить вправо за контейнер */
+  overflow: visible;
 }
 
 .tool-copy {
@@ -766,59 +737,115 @@ footer {
   font-size: 18px;
 }
 
-.tool-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+/* ─── Venue slider (фото интерьера с текстом по центру) ─── */
+.venue-slider {
+  position: relative;
+  /* Выходим вправо до края viewport из ограниченного контейнера */
+  width: calc(100% + ((100vw - 100%) / 2));
+  height: 480px;
+  border-radius: 16px 0 0 16px;
+  overflow: hidden;
+  margin-top: 48px;
+  background: #000;
+  contain: layout paint style;
 }
 
-.tool-grid a {
-  position: relative;
+.venue-slider__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transform: scale(1);
+  transition: opacity 1.2s ease, transform 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: contrast(1.06) saturate(1.15) brightness(0.92);
+}
+
+.venue-slider__overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.6) 100%),
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Текст + кнопки — единый блок строго по центру */
+.venue-slider__center {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  min-height: 203px;
-  padding: 24px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 244, 226, 0.13);
-  border-radius: 32px;
-  color: var(--cream);
-  background: linear-gradient(145deg, rgba(255, 244, 226, 0.085), rgba(255, 244, 226, 0.025));
-  transition: transform 0.25s ease, background 0.25s ease;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 3;
+  padding: 32px;
+  pointer-events: none;
 }
 
-.tool-grid a::after {
-  content: "";
-  position: absolute;
-  inset: auto -20% -50% 20%;
-  height: 130px;
-  background: radial-gradient(circle, rgba(228, 22, 39, 0.38), transparent 66%);
-  transform: translateY(34px);
-  transition: transform 0.25s ease;
+.venue-slider__caption {
+  margin: 0;
+  max-width: 600px;
+  /* Фиксированная высота чтобы кнопки не прыгали при смене текста */
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cream, #f6eee1);
+  font-family: serif;
+  font-size: clamp(24px, 3.5vw, 44px);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 4px 32px rgba(0, 0, 0, 0.8), 0 1px 4px rgba(0, 0, 0, 0.5);
+  word-break: keep-all;
+  hyphens: none;
+  transition: opacity 0.8s ease;
 }
 
-.tool-grid a:hover {
-  background: linear-gradient(145deg, rgba(228, 22, 39, 0.28), rgba(255, 244, 226, 0.045));
-  transform: translateY(-6px);
+.venue-slider__actions {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+  margin-top: 8px;
 }
 
-.tool-grid a:hover::after {
-  transform: translateY(0);
+@media (max-width: 768px) {
+  .venue-slider {
+    width: calc(100% + 16px);
+    height: 360px;
+    border-radius: 12px 0 0 12px;
+    margin-top: 28px;
+  }
+  .venue-slider__caption {
+    font-size: clamp(18px, 5vw, 28px);
+    max-width: 90%;
+  }
+  .venue-slider__actions {
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .venue-slider__actions .fire-btn {
+    font-size: 12px;
+    padding: 8px 14px;
+  }
 }
 
-.tool-grid svg {
-  color: var(--gold);
-}
-
-.tool-grid span {
-  font-size: 28px;
-  font-weight: 1000;
-  letter-spacing: -0.045em;
-}
-
-.tool-grid small {
-  color: var(--muted);
-  font-weight: 800;
+@media (prefers-reduced-motion: reduce) {
+  .venue-slider__img {
+    transition: opacity 0.3s ease;
+    transform: none !important;
+    filter: none;
+  }
+  .venue-slider__caption {
+    transition: opacity 0.3s ease;
+  }
 }
 
 .section-intro {
@@ -835,15 +862,13 @@ footer {
 }
 
 .section-intro h2,
-.split-panel h2,
-.contacts-section h2 {
+.split-panel h2 {
   font-size: clamp(36px, 5vw, 72px);
   line-height: 0.94;
 }
 
 .section-intro p,
-.split-panel p,
-.contacts-section p {
+.split-panel p {
   max-width: 560px;
   color: var(--muted);
   font-size: 18px;
@@ -865,10 +890,13 @@ footer {
   padding: 22px;
   border: 1px solid rgba(255, 244, 226, 0.13);
   border-radius: 38px;
-  background: linear-gradient(135deg, rgba(255, 244, 226, 0.09), rgba(255, 244, 226, 0.025));
+  background: rgba(10, 7, 5, 0.92);
   box-shadow: 0 24px 90px rgba(0, 0, 0, 0.28);
-  backdrop-filter: blur(10px);
-  transform-style: preserve-3d;
+  /* P2.5: removed backdrop-filter — scene-cards are sticky on scroll,
+     blur compositing is expensive. Solid bg achieves same visual. */
+  /* P1.4: removed preserve-3d — scene-cards don't tilt, no need for
+     expensive 3D compositor layer on sticky scrolling elements */
+  transform-style: flat;
 }
 
 .scene-card::before,
@@ -884,11 +912,13 @@ footer {
   transition: 0.5s ease;
 }
 
-.scene-card:hover::before,
-.dish-card:hover::before,
-.featured-dish:hover::before {
-  opacity: 1;
-  transform: translateX(80%);
+@media (hover: hover) {
+  .scene-card:hover::before,
+  .dish-card:hover::before,
+  .featured-dish:hover::before {
+    opacity: 1;
+    transform: translateX(80%);
+  }
 }
 
 .scene-card:nth-child(2) {
@@ -930,7 +960,8 @@ footer {
   min-height: 430px;
   border-radius: 28px;
   object-fit: cover;
-  filter: saturate(1.06) contrast(1.05);
+  /* Кинематографичная обработка — теплее, сочнее, глубже */
+  filter: saturate(1.15) contrast(1.08) brightness(0.94);
 }
 
 .scene-card picture {
@@ -999,7 +1030,6 @@ footer {
     translate3d(0, calc(var(--photo-progress, 0) * -10px), 0)
     rotate(calc(var(--photo-progress, 0) * 0.4deg));
   transition: filter 0.3s ease;
-  will-change: transform;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1008,6 +1038,92 @@ footer {
     transform: scale(1.02);
     transition: none;
     will-change: auto;
+  }
+}
+
+/* ─── Menu hero (шапка раздела меню с фото) ─── */
+.menu-hero {
+  position: relative;
+  width: 100%;
+  min-height: 100svh;
+  overflow: hidden;
+  border-radius: 0;
+  /* Залезаем под фиксированную шапку, как hero на главной */
+  margin-top: -80px;
+  /* Flex-layout: FireText слева, описание справа, оба внизу */
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 140px max(20px, calc((100vw - 1180px) / 2)) 74px;
+}
+
+.menu-hero img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.menu-hero picture {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.menu-hero__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.65) 80%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.menu-hero__content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 12px;
+  max-width: 820px;
+}
+
+.menu-hero__content h2 {
+  font-size: clamp(40px, 6.4vw, 96px);
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.menu-hero__sub {
+  position: relative;
+  z-index: 2;
+  max-width: 320px;
+  margin: 0;
+  color: rgba(255, 244, 226, 0.8);
+  font-size: clamp(18px, 2.4vw, 27px);
+}
+
+@media (max-width: 768px) {
+  .menu-hero {
+    min-height: 60svh;
+    border-radius: 0;
+    padding: 100px 16px 32px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .menu-hero__content h2 {
+    font-size: clamp(22px, 6vw, 32px);
+  }
+  .menu-hero__sub {
+    max-width: none;
+    text-align: left;
+    font-size: 15px;
   }
 }
 
@@ -1025,34 +1141,30 @@ footer {
   gap: 8px;
   max-height: calc(100svh - 130px);
   padding: 12px;
+  /* Скрываем визуальную полоску прокрутки — sidebar может выходить за
+     max-height при переключении категорий, но скроллится без видимого
+     треша. По образцу .bar-tabs. */
   overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid rgba(255, 244, 226, 0.12);
   border-radius: 28px;
   background: rgba(255, 244, 226, 0.05);
 }
 
-.menu-tabs button {
-  display: flex;
-  align-items: center;
+.menu-tabs::-webkit-scrollbar { display: none; }
+
+.menu-tabs .menu-tab-btn {
+  width: 100%;
   justify-content: space-between;
-  min-height: 48px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 16px;
-  color: rgba(255, 244, 226, 0.72);
-  font-weight: 800;
-  text-align: left;
-  background: transparent;
+  padding: 12px 14px;
+  font-size: 0.86rem;
 }
 
-.menu-tabs button.active {
-  color: #fff;
-  background: linear-gradient(135deg, #df1a28, #821016);
-}
-
-.menu-tabs span {
-  color: inherit;
-  opacity: 0.72;
+.menu-tab-count {
+  opacity: 0.6;
+  font-size: 0.8rem;
 }
 
 .menu-board {
@@ -1077,31 +1189,89 @@ footer {
   gap: 14px;
 }
 
+/* Dish card — визуал «Бар-карты» (живое премиум): двойная тень +
+   warm-glow на hover, tilt 3D через CSS-переменные --bx/--by/--hover,
+   фото-зум, dotted leader между весом и ценой. Эффекты совпадают
+   с .bar-card в components/bar-menu.css. */
 .dish-card {
+  --bx: 0;
+  --by: 0;
+  --hover: 0;
   position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255, 244, 226, 0.12);
-  border-radius: 28px;
-  background: rgba(10, 7, 5, 0.38);
-  transition: transform 0.25s ease, border-color 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  border: 1px solid rgba(255, 174, 59, calc(0.12 + var(--hover) * 0.43));
+  border-radius: 26px;
+  background: linear-gradient(160deg, rgba(20, 14, 10, 0.78), rgba(10, 7, 5, 0.95));
+  /* P1.4: preserve-3d только при hover — в покое flat layer,
+     меньше compositor layers при скролле */
+  transform-style: flat;
+  transition: transform 0.32s cubic-bezier(0.22, 0.61, 0.36, 1), border-color 0.25s, box-shadow 0.32s, transform-style 0s;
+  transform:
+    translateY(calc(var(--hover) * -6px))
+    perspective(1000px)
+    rotateX(calc(var(--by) * var(--hover) * -3deg))
+    rotateY(calc(var(--bx) * var(--hover) * 4deg));
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.32),
+    0 2px 8px rgba(255, 110, 30, 0);
 }
 
-.dish-card:hover {
-  border-color: rgba(224, 166, 75, 0.5);
-  transform: translateY(-5px);
+/* P1.4: promote to 3D layer only on interaction */
+.dish-card:hover,
+.dish-card:focus-within {
+  transform-style: preserve-3d;
+  box-shadow:
+    0 calc(8px + var(--hover) * 20px) calc(20px + var(--hover) * 44px) rgba(0, 0, 0, calc(0.32 + var(--hover) * 0.23)),
+    0 calc(2px + var(--hover) * 4px) calc(8px + var(--hover) * 14px) rgba(255, 110, 30, calc(var(--hover) * 0.18));
+}
+
+@media (hover: hover) {
+  .dish-card:hover,
+  .dish-card:focus-within {
+    border-color: rgba(255, 174, 59, 0.6);
+  }
+}
+
+.dish-card:active {
+  transform: scale(0.97);
+  border-color: rgba(255, 174, 59, 0.5);
 }
 
 .dish-card img {
   width: 100%;
   height: 220px;
   object-fit: cover;
+  border-radius: 26px 26px 0 0;
+  transform:
+    scale(calc(1.04 + var(--hover) * 0.06))
+    translate3d(calc(var(--bx) * 8px), calc(var(--by) * 6px - var(--hover) * 4px), 0);
+  transition: transform 0.5s cubic-bezier(0.22, 0.61, 0.36, 1), filter 0.4s;
+  filter: saturate(calc(1 + var(--hover) * 0.15)) brightness(calc(1 + var(--hover) * 0.06));
 }
 
 .dish-card picture {
   display: block;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  background: #110907;
+  border-radius: 26px 26px 0 0;
 }
 
-.dish-card-no-img > div {
+.dish-card picture::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(180px at calc((var(--bx) * 0.5 + 0.5) * 100%) calc((var(--by) * 0.5 + 0.5) * 100%), rgba(255, 196, 130, 0.35), transparent 60%);
+  mix-blend-mode: screen;
+  opacity: var(--hover);
+  transition: opacity 0.25s;
+}
+
+.dish-card-no-img .dish-card-body {
   padding-top: 24px;
 }
 
@@ -1111,62 +1281,123 @@ footer {
   background: linear-gradient(135deg, rgba(40, 30, 20, 0.6), rgba(20, 15, 10, 0.8));
 }
 
-.dish-card > div {
-  padding: 16px;
+/* Dish-card body — 1-в-1 с .bar-card-body */
+.dish-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 28px;
+  flex: 1;
 }
 
-.dish-card span,
-.featured-dish span {
-  color: var(--gold);
+.dish-card-title {
+  margin: 0;
+  color: var(--cream, #f6eee1);
+  font-size: 20px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+.dish-card-desc {
+  margin: 0;
+  color: rgba(255, 244, 226, 0.7);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.dish-card-footer {
+  display: grid;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 32px;
+  /* Выводим footer из 3D-контекста родителя, чтобы filter:drop-shadow
+     на FireButton не обрезался preserve-3d. */
+  transform-style: flat;
+  transform: translateZ(0);
+}
+
+/* Кнопка «В заказ» / qty-stepper — отдельный блок ниже цены */
+.dish-card-action {
+  display: grid;
+  padding-top: 16px;
+  transform-style: flat;
+  transform: translateZ(0);
+}
+
+/* Кнопка внутри dish-card — стандартный fire-btn-glow без override */
+.dish-card .fire-btn-glow {
+  filter: drop-shadow(0 0 14px rgba(216, 20, 32, 0.45));
+  box-shadow: none;
+}
+
+.dish-card .fire-btn-glow:hover,
+.dish-card .fire-btn-glow:focus-visible {
+  filter: drop-shadow(0 0 20px rgba(216, 20, 32, 0.6));
+}
+
+/* Price-line — leader-row как в .bar-card-price-line */
+.dish-card-price-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+}
+
+.dish-card-volume {
+  color: var(--gold, #e0a64b);
   font-size: 12px;
-  font-weight: 1000;
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.dish-card h4 {
-  margin: 0;
-  color: var(--cream);
-  font-size: 22px;
-  line-height: 1.03;
-  text-transform: uppercase;
+.dish-card-leader {
+  flex: 1 1 auto;
+  border-bottom: 1px dotted rgba(224, 166, 75, 0.48);
+  transform: translateY(-2px);
 }
 
-.dish-card p {
-  margin: 7px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.dish-card footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  width: 100%;
-  margin-top: 16px;
-  padding: 0;
-}
-
-.dish-card strong {
-  color: var(--cream);
-  font-size: 24px;
+.dish-card-price {
+  color: var(--cream, #f6eee1);
+  font-size: 20px;
   line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
-.dish-card button,
 .featured-dish button {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   min-height: 42px;
   padding: 0 14px;
-  border: 0;
+  border: 1px solid rgba(255, 130, 60, 0.5);
   border-radius: 999px;
-  color: #fff;
+  color: #f2e6d4;
   font-weight: 900;
-  background: linear-gradient(135deg, #e41627, #821016);
-  box-shadow: 0 12px 30px rgba(228, 22, 39, 0.24);
+  background: transparent;
+  filter: drop-shadow(0 0 14px rgba(216, 20, 32, 0.45));
+  transition: transform 0.18s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.featured-dish button:hover,
+.featured-dish button:focus-visible {
+  border-color: rgba(255, 130, 60, 1);
+  background: rgba(255, 130, 60, 0.1);
+  filter: drop-shadow(0 0 22px rgba(216, 20, 32, 0.65));
+}
+
+/* Мобильный touch-эффект: при :active на touch-устройствах
+   активируем --hover=1 через CSS, чтобы glow + shadow + zoom
+   работали без pointer-move handlers (без лагов скролла). */
+@media (hover: none) {
+  .dish-card:active {
+    --hover: 1;
+    transform: scale(0.97) perspective(1000px);
+    border-color: rgba(255, 174, 59, 0.6);
+  }
 }
 
 /* Inline qty controls inside dish-card / featured-dish footer.
@@ -1175,9 +1406,10 @@ footer {
 .dish-qty {
   display: inline-flex;
   align-items: center;
+  justify-self: center;
   gap: 6px;
   padding: 4px;
-  border: 1px solid rgba(255, 244, 226, 0.18);
+  border: 1px solid rgba(255, 130, 60, 0.5);
   border-radius: 999px;
   background: rgba(20, 14, 10, 0.7);
   color: var(--cream, #f6eee1);
@@ -1194,18 +1426,18 @@ footer {
   height: 30px;
   min-height: 30px;
   padding: 0;
-  border: 0;
+  border: 1px solid rgba(255, 130, 60, 0.5);
   border-radius: 999px;
-  color: #fff;
-  background: linear-gradient(135deg, #e41627, #821016);
+  color: rgba(255, 130, 60, 1);
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(228, 22, 39, 0.25);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
 .dish-qty .dish-qty-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(228, 22, 39, 0.36);
+  border-color: rgba(255, 130, 60, 1);
+  background: rgba(255, 130, 60, 0.1);
 }
 
 .dish-qty .dish-qty-btn:active {
@@ -1234,6 +1466,226 @@ footer {
   contain-intrinsic-size: 1px 900px;
 }
 
+/* ─── Огненный блок НАД видео ─── */
+.order-fire-intro {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: clamp(64px, 9vw, 120px) 0 clamp(16px, 2vw, 32px);
+  display: grid;
+  gap: 20px;
+}
+
+/* Шрифт FireText h2 — такой же как в других секциях (.section-intro h2) */
+.order-fire-intro h2 {
+  margin: 0;
+  color: var(--cream);
+  font-size: clamp(36px, 5vw, 72px);
+  line-height: 0.94;
+  letter-spacing: -0.085em;
+}
+
+.order-fire-intro .subtitle-reveal {
+  max-width: 560px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+/* ─── order-section--reel: scroll-zoom видео (CSS animation-timeline) ─── */
+.order-section--reel {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  content-visibility: visible !important;
+  contain: none !important;
+}
+
+/* Обёртка — минимальная высота для zoom анимации */
+.order-reel-wrap {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Карточка с видео — полный цикл: zoom-in → hold → zoom-out + darken */
+.order-reel-card {
+  position: relative;
+  width: 72%;
+  height: 72vh;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #000;
+  transform-origin: center center;
+  animation: orderFullCycle linear both;
+  animation-timeline: view();
+  animation-range: entry 0% exit 100%;
+  /* GPU-промоушен для плавности */
+  will-change: transform, border-radius;
+  contain: layout paint;
+}
+
+@keyframes orderFullCycle {
+  /* 0-25%: zoom in */
+  0% {
+    transform: scale(0.75);
+    border-radius: 20px;
+  }
+  25% {
+    transform: scale(1.38);
+    border-radius: 0px;
+  }
+  /* 25-75%: hold full size (3 текста сменяются) */
+  75% {
+    transform: scale(1.38);
+    border-radius: 0px;
+  }
+  /* 75-100%: zoom out + darken */
+  100% {
+    transform: scale(0.75);
+    border-radius: 20px;
+  }
+}
+
+/* Видео — cover, GPU-оптимизация */
+.order-reel__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+  transform: translateZ(0);
+}
+
+/* Затемнение */
+.order-reel__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Затемнение в конце (фаза zoom-out) */
+.order-reel__darken {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  z-index: 2;
+  animation: darkenFade linear both;
+  animation-timeline: view();
+  animation-range: cover 70% exit 100%;
+}
+
+@keyframes darkenFade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Фразы поверх видео — вне карточки, в обёртке */
+.order-reel__phrases {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 72vh;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.order-reel__phrase {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--cream, #f6eee1);
+  font-family: serif;
+  font-size: clamp(24px, 4vw, 48px);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-weight: 500;
+  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.7);
+  word-break: keep-all;
+  hyphens: none;
+  text-align: center;
+  padding: 0 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+@keyframes phraseReveal {
+  0% { opacity: 0; transform: translateY(16px); }
+  25% { opacity: 1; transform: translateY(0); }
+  75% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .order-reel-card {
+    animation: none;
+    transform: none;
+    border-radius: 12px;
+    width: 100%;
+    height: 80vh;
+  }
+  .order-reel__phrase {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .order-reel__darken {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* data-perf='low' — упрощаем */
+:root[data-perf='low'] .order-reel-card {
+  will-change: auto;
+}
+
+:root[data-perf='low'] .order-reel__video {
+  will-change: auto;
+  transform: none;
+}
+
+/* Мобильный */
+@media (max-width: 768px) {
+  .order-reel-card {
+    width: 92%;
+    height: 60vh;
+  }
+  .order-reel__phrase {
+    font-size: clamp(18px, 5.5vw, 32px);
+  }
+}
+
+/* Fallback для браузеров без animation-timeline */
+@supports not (animation-timeline: view()) {
+  .order-reel-card {
+    animation: none;
+    transform: none;
+    border-radius: 12px;
+    width: 100%;
+    height: 80vh;
+  }
+  .order-reel__phrase {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .order-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
@@ -1247,8 +1699,7 @@ footer {
   gap: 14px;
 }
 
-.featured-dish,
-.cart-panel {
+.featured-dish {
   border: 1px solid rgba(255, 244, 226, 0.13);
   border-radius: 32px;
   background: linear-gradient(145deg, rgba(255, 244, 226, 0.085), rgba(255, 244, 226, 0.025));
@@ -1288,225 +1739,11 @@ footer {
   font-size: 14px;
 }
 
-.cart-panel {
-  position: sticky;
-  top: 104px;
-  display: grid;
-  gap: 14px;
-  padding: 24px;
-}
-
-.cart-panel svg {
-  color: var(--gold);
-}
-
-.cart-panel h3 {
-  margin: 0;
-  color: var(--cream);
-  font-size: 34px;
-}
-
-.cart-panel p,
-.cart-panel label {
-  color: var(--muted);
-}
-
-.cart-lines {
-  display: grid;
-  gap: 8px;
-}
-
-.cart-lines .cart-line,
-.payment-ready {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 16px;
-  color: var(--cream);
-  background: rgba(10, 7, 5, 0.36);
-}
-
-.cart-line span {
-  flex: 1;
-}
-
-.cart-line button {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 244, 226, 0.12);
-  border-radius: 999px;
-  color: var(--cream);
-  font-weight: 900;
-  background: rgba(228, 22, 39, 0.18);
-}
-
-.cart-lines span {
-  color: var(--muted);
-}
-
-.cart-panel input {
-  width: 100%;
-  min-height: 50px;
-  margin-top: 8px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 244, 226, 0.14);
-  border-radius: 16px;
-  color: var(--cream);
-  background: rgba(10, 7, 5, 0.5);
-}
-
-.payment-ready {
-  justify-content: flex-start;
-  color: var(--muted);
-}
-
 .booking-experience {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
   gap: 22px;
   align-items: stretch;
-}
-
-.room-view {
-  position: relative;
-  min-height: 620px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 244, 226, 0.14);
-  border-radius: 38px;
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.34);
-}
-
-.room-view img {
-  width: 100%;
-  height: 100%;
-  min-height: 620px;
-  object-fit: cover;
-  transform: scale(1.03);
-}
-
-.room-vignette {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 48% 42%, transparent 0 20%, rgba(10, 7, 5, 0.26) 42%, rgba(10, 7, 5, 0.72)),
-    linear-gradient(180deg, rgba(10, 7, 5, 0.08), rgba(10, 7, 5, 0.72));
-}
-
-.table-point {
-  position: absolute;
-  width: 58px;
-  height: 58px;
-  border: 1px solid rgba(255, 244, 226, 0.58);
-  border-radius: 50%;
-  color: #fff;
-  font-weight: 1000;
-  background: rgba(22, 140, 82, 0.82);
-  box-shadow: 0 0 0 10px rgba(22, 140, 82, 0.16), 0 0 42px rgba(51, 232, 143, 0.46);
-  transform: translate(-50%, -50%);
-  transition: 0.25s ease;
-}
-
-.table-point:hover,
-.table-point.selected {
-  background: #e41627;
-  box-shadow: 0 0 0 13px rgba(228, 22, 39, 0.2), 0 0 54px rgba(255, 70, 26, 0.7);
-  transform: translate(-50%, -50%) scale(1.12);
-}
-
-.table-point.reserved {
-  background: rgba(40, 33, 28, 0.76);
-  box-shadow: 0 0 0 8px rgba(0, 0, 0, 0.22);
-  opacity: 0.6;
-}
-
-.table-caption {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 24px;
-  display: grid;
-  gap: 6px;
-  padding: 18px;
-  border: 1px solid rgba(255, 244, 226, 0.18);
-  border-radius: 24px;
-  color: var(--cream);
-  background: rgba(10, 7, 5, 0.68);
-  backdrop-filter: blur(16px);
-}
-
-.table-caption span {
-  color: var(--gold);
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.booking-form {
-  border: 1px solid rgba(255, 244, 226, 0.13);
-  border-radius: 34px;
-  background: linear-gradient(145deg, rgba(255, 244, 226, 0.09), rgba(255, 244, 226, 0.035));
-  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.24);
-}
-
-.booking-form {
-  display: grid;
-  gap: 14px;
-  padding: 26px;
-}
-
-.booking-form h3 {
-  margin: 0 0 8px;
-  color: var(--cream);
-  font-size: 30px;
-  line-height: 1;
-}
-
-.booking-form label {
-  display: grid;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.booking-form input,
-.booking-form select {
-  width: 100%;
-  min-height: 50px;
-  padding: 0 15px;
-  border: 1px solid rgba(255, 244, 226, 0.14);
-  border-radius: 16px;
-  color: var(--cream);
-  background: rgba(10, 7, 5, 0.5);
-}
-
-.booking-form select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, rgba(255, 244, 226, 0.6) 50%),
-    linear-gradient(-45deg, transparent 50%, rgba(255, 244, 226, 0.6) 50%);
-  background-position:
-    calc(100% - 18px) 50%,
-    calc(100% - 13px) 50%;
-  background-size:
-    5px 5px,
-    5px 5px;
-  background-repeat: no-repeat;
-  padding-right: 36px;
-}
-
-/* iter5: упрощённый booking layout (без визуального TableMap) */
-.booking-section--simple .booking-experience-simple {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
-  gap: 28px;
 }
 
 /* Phase 9.2: единственный вход в бронь — план зала на всю ширину;
@@ -1521,70 +1758,10 @@ footer {
   margin: 0 auto;
 }
 
-.booking-meta-card {
-  background: linear-gradient(180deg, rgba(28, 18, 13, 0.7), rgba(12, 8, 6, 0.5));
-  border: 1px solid rgba(255, 244, 226, 0.08);
-  border-radius: 22px;
-  padding: 28px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.booking-meta-card h3 {
-  margin: 0;
-  color: var(--cream);
-  font-size: 28px;
-  line-height: 1.15;
-}
-.booking-meta-card ul {
-  list-style: none;
-  padding: 0;
-  margin: 6px 0 0;
-  display: grid;
-  gap: 10px;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.4;
-}
-.booking-meta-card li::before {
-  content: "·";
-  color: rgba(255, 144, 64, 0.6);
-  margin-right: 10px;
-}
-
-@media (max-width: 920px) {
-  .booking-section--simple .booking-experience-simple {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
 .full {
   width: 100%;
   justify-content: center;
   cursor: pointer;
-}
-
-.booking-success {
-  margin: 0;
-  padding: 13px;
-  border-radius: 16px;
-  color: #d9ffec;
-  background: rgba(22, 140, 82, 0.18);
-}
-
-.booking-error {
-  margin: 0;
-  padding: 13px;
-  border-radius: 16px;
-  color: #ffe1db;
-  background: rgba(228, 22, 39, 0.18);
 }
 
 /* .floating-cart removed (Task 1) — see homepage-extra.css */
@@ -1616,9 +1793,8 @@ footer {
 }
 
 .gallery-track.is-running {
-  /* Task fix-2 — раньше было 32s, делаем медленнее (~60s)
-     чтобы фото не «летели». */
-  animation: galleryMove 64s linear infinite;
+  /* Медленная созерцательная прокрутка в стиле премиум-галерей */
+  animation: galleryMove 120s linear infinite;
 }
 
 .gallery-track.is-running:hover {
@@ -1630,9 +1806,9 @@ footer {
 }
 
 .gallery-track img {
-  width: min(68vw, 520px);
-  height: 360px;
-  border-radius: 34px;
+  width: min(56vw, 440px);
+  height: 300px;
+  border-radius: 12px;
   object-fit: cover;
 }
 
@@ -1644,6 +1820,40 @@ footer {
 :root[data-perf='low'] .cinema-hero::after,
 :root[data-perf='low'] .gallery-track.is-running {
   animation: none !important;
+}
+
+/* P2.6: pause CSS animations when element is offscreen (IO-driven class).
+   Saves compositor work for fireGlow, grain, fire-flicker loops. */
+.is-offscreen .film-grain::before,
+.is-offscreen.film-grain::before {
+  animation-play-state: paused;
+}
+.is-offscreen .cinema-hero::after,
+.is-offscreen.cinema-hero::after,
+.is-offscreen .animated-fire-glow,
+.is-offscreen.animated-fire-glow {
+  animation-play-state: paused;
+}
+
+/* Task C15 + dish-card parity с .bar-card — упрощённые тени для
+   средних/слабых устройств, отключение tilt на low-tier. */
+:root[data-perf='mid'] .dish-card {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+}
+
+:root[data-perf='low'] .dish-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dish-card,
+  .dish-card img {
+    transition: none !important;
+  }
+  .dish-card:hover {
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1700,45 +1910,12 @@ footer {
   margin-top: 18px;
 }
 
-.contacts-section {
-  display: grid;
-  grid-template-columns: 1fr 0.8fr;
-  gap: 34px;
-  align-items: end;
-}
-
-.contact-cards {
-  display: grid;
-  gap: 12px;
-}
-
-.contact-cards a,
-.contact-cards span {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  min-height: 64px;
-  padding: 0 18px;
-  border: 1px solid rgba(255, 244, 226, 0.13);
-  border-radius: 20px;
-  color: var(--cream);
-  background: rgba(255, 244, 226, 0.055);
-}
-
 .social-icon {
   width: 22px;
   height: 22px;
   flex: 0 0 22px;
   object-fit: contain;
   filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.16));
-}
-
-.contact-cards .award-card {
-  align-items: center;
-  min-height: 84px;
-  background:
-    radial-gradient(circle at 18% 50%, rgba(255, 255, 255, 0.12), transparent 42%),
-    rgba(255, 244, 226, 0.055);
 }
 
 .award-badge {
@@ -2033,6 +2210,36 @@ footer.site-footer .footer-copyright {
   }
 }
 
+/* ─── Tablet (768–1024px) ─── */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .menu-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .menu-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .dish-card img {
+    height: 160px;
+  }
+
+  .dish-card-title {
+    font-size: 16px;
+  }
+
+  .dish-card-price {
+    font-size: 18px;
+  }
+
+  .bar-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+}
+
 @media (max-width: 920px) {
   .site-header nav {
     position: fixed;
@@ -2048,8 +2255,7 @@ footer.site-footer .footer-copyright {
     background: rgba(10, 7, 5, 0.94);
   }
 
-  .site-header nav.open,
-  .mobile-menu {
+  .site-header nav.open {
     display: grid;
   }
 
@@ -2068,7 +2274,6 @@ footer.site-footer .footer-copyright {
   .menu-layout,
   .order-layout,
   .booking-experience,
-  .contacts-section,
   .jobs-section,
   .scene-card {
     grid-template-columns: 1fr;
@@ -2093,18 +2298,56 @@ footer.site-footer .footer-copyright {
     min-height: 520px;
   }
 
-  .tool-grid {
-    grid-template-columns: 1fr;
-  }
-
   .menu-card-grid,
   .featured-dishes {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
-  .cart-panel {
-    position: relative;
-    top: auto;
+  .dish-card {
+    border-radius: 14px;
+  }
+
+  .dish-card img {
+    height: 110px;
+  }
+
+  .dish-card-body {
+    padding: 10px;
+  }
+
+  .dish-card-title {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+
+  .dish-card-desc {
+    font-size: 12px;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .dish-card-footer {
+    gap: 6px;
+  }
+
+  .dish-card-action {
+    padding-top: 10px;
+  }
+
+  .dish-card-price {
+    font-size: 16px;
+  }
+
+  .dish-card-volume {
+    font-size: 10px;
+  }
+
+  .dish-card-no-img .dish-card-body {
+    padding-top: 12px;
   }
 
   .jobs-card,
@@ -2121,9 +2364,7 @@ footer.site-footer .footer-copyright {
     top: auto;
   }
 
-  .scene-card img,
-  .room-view,
-  .room-view img {
+  .scene-card img {
     min-height: 420px;
   }
 
@@ -2149,9 +2390,8 @@ footer.site-footer .footer-copyright {
 
   .hero-content h1,
   .section-intro h2,
-  .split-panel h2,
-  .contacts-section h2 {
-    font-size: clamp(44px, 16vw, 72px);
+  .split-panel h2 {
+    font-size: clamp(32px, 10vw, 56px);
   }
 
   .journey,
@@ -2161,7 +2401,6 @@ footer.site-footer .footer-copyright {
   .menu-section,
   .order-section,
   .booking-section,
-  .contacts-section,
   .jobs-section,
   footer {
     padding: 72px 0;
@@ -2169,7 +2408,6 @@ footer.site-footer .footer-copyright {
 
   .scene-card,
   .menu-board,
-  .booking-form,
   .sticky-panel {
     padding: 18px;
     border-radius: 26px;
@@ -2187,188 +2425,46 @@ footer.site-footer .footer-copyright {
     height: 220px;
   }
 
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .table-point {
-    width: 48px;
-    height: 48px;
-  }
-
   footer {
     align-items: flex-start;
     grid-template-columns: 1fr;
   }
 }
 
-/* === Booking improvements === */
-.zone-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 12px 0 22px;
-}
-
-.zone-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #d6c5ad;
-  cursor: pointer;
-  font-size: 0.86rem;
-  letter-spacing: 0.01em;
-  transition: all 0.18s ease;
-}
-
-.zone-chip:hover {
-  border-color: rgba(255, 130, 60, 0.5);
-  color: #fff;
-}
-
-.zone-chip.active {
-  background: linear-gradient(135deg, #d81420 0%, #ff5b3a 100%);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(216, 20, 32, 0.32);
-}
-
-.room-view.large {
-  min-height: 480px;
-  aspect-ratio: 16 / 10;
-  border-radius: 28px;
-  overflow: hidden;
-  position: relative;
-}
-
-.zone-labels .zone-label {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(0, 0, 0, 0.32);
-  padding: 4px 10px;
-  border-radius: 999px;
-  backdrop-filter: blur(4px);
-  pointer-events: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.table-point.held {
-  background: radial-gradient(circle at 35% 30%, #ffe6a8, #e0a64b);
-  color: #1a1410;
-}
-
-.table-point.zone-window { box-shadow: 0 0 0 2px rgba(120, 200, 255, 0.4); }
-.table-point.zone-grill { box-shadow: 0 0 0 2px rgba(255, 130, 60, 0.5); }
-.table-point.zone-bar { box-shadow: 0 0 0 2px rgba(216, 60, 30, 0.55); }
-.table-point.zone-lounge { box-shadow: 0 0 0 2px rgba(180, 130, 220, 0.45); }
-.table-point.zone-banquet { box-shadow: 0 0 0 2px rgba(95, 220, 138, 0.45); }
-
-.table-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.table-card {
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 14px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f2e6d4;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.table-card:hover:not(:disabled) {
-  border-color: rgba(255, 130, 60, 0.5);
-  background: rgba(255, 130, 60, 0.06);
-  transform: translateY(-1px);
-}
-
-.table-card.selected {
-  border-color: #ff8a3a;
-  background: rgba(255, 130, 60, 0.1);
-  box-shadow: 0 8px 24px rgba(216, 20, 32, 0.22);
-}
-
-.table-card.reserved {
-  opacity: 0.45;
-  cursor: not-allowed;
-  text-decoration: line-through;
-}
-
-.table-card:disabled { cursor: not-allowed; }
-
-.table-card .table-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.table-card .table-card-meta {
-  display: flex;
-  gap: 6px;
-  color: #a78f72;
-  font-size: 0.85rem;
-}
-
-.table-card p {
-  font-size: 0.86rem;
-  color: #d6c5ad;
-  margin: 0;
-}
-
-.pill {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.pill.free { background: rgba(95, 220, 138, 0.16); color: #5ddd8a; }
-.pill.reserved { background: rgba(216, 20, 32, 0.18); color: #ff7875; }
-.pill.held { background: rgba(224, 166, 75, 0.18); color: #e0a64b; }
-
-@media (max-width: 720px) {
-  .room-view.large { min-height: 320px; aspect-ratio: 4 / 3; }
-}
+/* === Booking improvements: legacy selectors removed 2026-05-12 === */
 
 /* Sticky mobile CTA */
 .mobile-cta-bar {
   display: none;
   position: fixed;
-  bottom: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   left: 12px;
   right: 12px;
   z-index: 90;
   gap: 8px;
   background: rgba(15, 11, 8, 0.92);
   backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 8px;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+  /* Скрытие при скролле вниз */
+  transform: translateY(0);
+  transition: transform 0.3s ease;
+}
+
+.mobile-cta-bar.is-hidden {
+  transform: translateY(calc(100% + 24px));
 }
 
 .mobile-cta-bar a {
   flex: 1;
   text-align: center;
   padding: 12px 14px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
   border-radius: 12px;
   text-decoration: none;
   color: #fff;
@@ -2389,7 +2485,7 @@ footer.site-footer .footer-copyright {
 
 @media (max-width: 768px) {
   .mobile-cta-bar { display: flex; }
-  body { padding-bottom: 80px; }
+  body { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .intro-overlay,
@@ -2461,12 +2557,7 @@ footer.site-footer .footer-copyright {
    ============================================================== */
 .menu-layout,
 .bar-section,
-.scene-stack,
-.tool-grid,
-.review-grid,
-.gallery-rail,
-.section-jobs,
-.contact-grid {
+.scene-stack {
   content-visibility: auto;
   contain-intrinsic-size: auto 720px;
 }
@@ -2475,4 +2566,138 @@ footer.site-footer .footer-copyright {
    чтобы scrollbar не «прыгал» при первом рендере. */
 .menu-layout {
   contain-intrinsic-size: auto 1600px;
+}
+
+
+/* ─── Menu & Bar standalone pages ─── */
+.menu-page,
+.bar-page,
+.booking-page {
+  padding-top: 80px;
+  min-height: 100svh;
+  background: var(--coal);
+}
+
+.menu-page__empty-cart-hint {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ─── Header nav visible on mobile ─── */
+@media (max-width: 880px) {
+  .site-header .header-nav-desktop {
+    display: none;
+  }
+  .site-header .header-nav-desktop::-webkit-scrollbar { display: none; }
+  .site-header .header-nav-desktop a {
+    font-size: 11px;
+    padding: 6px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}
+
+/* Active nav link */
+.header-nav-desktop a.is-current {
+  color: var(--gold);
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 2px;
+}
+
+/* ─── Lunch toast (бизнес-ланч закрыт) ─── */
+.lunch-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(120%);
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 36px;
+  border: 1px solid rgba(224, 166, 75, 0.35);
+  border-radius: 20px;
+  background: rgba(18, 13, 10, 0.95);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(224, 166, 75, 0.12) inset;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+}
+
+.lunch-toast--visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lunch-toast__title {
+  margin: 0;
+  color: var(--gold, #e0a64b);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-align: center;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.lunch-toast__sub {
+  margin: 0;
+  color: var(--muted, #cbb9a6);
+  font-size: 13px;
+  text-align: center;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+@media (max-width: 768px) {
+  .lunch-toast {
+    bottom: 20px;
+    padding: 16px 24px;
+    width: calc(100% - 32px);
+    max-width: 360px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lunch-toast {
+    transition: opacity 0.2s ease;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ─── Dish badges (ТОП / Острое) ─── */
+.dish-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.dish-badge--top {
+  background: var(--ember, #d81420);
+  color: var(--cream, #f6eee1);
+}
+
+.dish-badge--spicy {
+  background: rgba(216, 20, 32, 0.12);
+  color: var(--ember, #d81420);
+  padding: 2px 4px;
+  border: 1px solid rgba(216, 20, 32, 0.3);
+}
+
+.dish-badge--spicy svg {
+  display: block;
+  filter: drop-shadow(0 0 3px rgba(216, 20, 32, 0.5));
 }

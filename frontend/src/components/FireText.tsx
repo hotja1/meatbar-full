@@ -31,7 +31,7 @@ export function FireText({
   stagger = 32,
   sweeps = 1,
   ariaLabel,
-  repeatInterval = 30,
+  repeatInterval = 60,
 }: FireTextProps) {
   const text = String(children)
   const words = text.split(' ')
@@ -261,10 +261,34 @@ function FireCanvas({
       canvas.height = height * dpr
       maskCanvas.width = width * dpr
       maskCanvas.height = height * dpr
+      // P1.2 — rebuild char position cache on resize.
+      cacheCharPositions()
+    }
+
+    // P1.2 — Cache char positions once at mount + resize instead of
+    // querySelectorAll + getBoundingClientRect every frame.
+    type CharPos = { char: string; x: number; y: number }
+    let charPositions: CharPos[] = []
+
+    const cacheCharPositions = () => {
+      const charSpans = host.querySelectorAll('.ft-char')
+      if (charSpans.length === 0) { charPositions = []; return }
+      const hostRect = host.getBoundingClientRect()
+      const result: CharPos[] = []
+      charSpans.forEach((span) => {
+        const el = span as HTMLElement
+        const rect = el.getBoundingClientRect()
+        result.push({
+          char: el.textContent || '',
+          x: rect.left - hostRect.left,
+          y: rect.top - hostRect.top,
+        })
+      })
+      charPositions = result
     }
 
     const updateTextMask = () => {
-      if (!maskCtx) return
+      if (!maskCtx || charPositions.length === 0) return
       maskCtx.setTransform(1, 0, 0, 1, 0, 0)
       maskCtx.scale(dpr, dpr)
       maskCtx.clearRect(0, 0, width, height)
@@ -272,18 +296,10 @@ function FireCanvas({
       maskCtx.fillStyle = '#fff'
       maskCtx.textBaseline = 'top'
 
-      const charSpans = host.querySelectorAll('.ft-char')
-      if (charSpans.length === 0) return
-      const hostRect = host.getBoundingClientRect()
-
-      charSpans.forEach((span) => {
-        const el = span as HTMLElement
-        const rect = el.getBoundingClientRect()
-        const x = rect.left - hostRect.left
-        const y = rect.top - hostRect.top
-        const char = el.textContent || ''
-        maskCtx!.fillText(char, x, y)
-      })
+      for (let i = 0; i < charPositions.length; i++) {
+        const cp = charPositions[i]
+        maskCtx.fillText(cp.char, cp.x, cp.y)
+      }
     }
 
     type P = {

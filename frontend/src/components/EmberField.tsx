@@ -21,6 +21,45 @@ type Ember = {
   ring: boolean
 }
 
+/*
+ * P1.1 — Pre-baked radial-gradient sprite cache for ring embers.
+ *
+ * Before: createRadialGradient + beginPath + arc + fill — every particle,
+ * every frame. For ~60 particles @ 30fps = 1800 gradient objects per second.
+ * After: drawImage of a pre-rendered canvas, tinted via globalAlpha.
+ *
+ * Module-level singleton so two <EmberField /> instances (hero + future)
+ * share the cache. Lazy-built on first use, rebuilt if DPR changes.
+ */
+const RING_CACHE_SIZE = 12
+const RING_SPRITE_RADIUS_CSS = 32
+let ringCache: HTMLCanvasElement[] | null = null
+let ringCacheDpr = 0
+
+function getRingCache(dpr: number): HTMLCanvasElement[] {
+  if (ringCache && ringCacheDpr === dpr) return ringCache
+  const list: HTMLCanvasElement[] = []
+  const r = RING_SPRITE_RADIUS_CSS * dpr
+  for (let i = 0; i < RING_CACHE_SIZE; i++) {
+    const hue = 18 + ((44 - 18) * i) / (RING_CACHE_SIZE - 1)
+    const c = document.createElement('canvas')
+    c.width = r * 2
+    c.height = r * 2
+    const g = c.getContext('2d')
+    if (!g) continue
+    const grad = g.createRadialGradient(r, r, 0, r, r, r)
+    grad.addColorStop(0, `hsla(${hue}, 100%, 72%, 1)`)
+    grad.addColorStop(0.4, `hsla(${hue - 8}, 100%, 52%, 0.55)`)
+    grad.addColorStop(1, 'rgba(0,0,0,0)')
+    g.fillStyle = grad
+    g.fillRect(0, 0, r * 2, r * 2)
+    list.push(c)
+  }
+  ringCache = list
+  ringCacheDpr = dpr
+  return list
+}
+
 /**
  * EmberField — a canvas of ambient flying fire embers that float
  * upward across the hero section. We emit a steady stream of small
@@ -51,6 +90,9 @@ export function EmberField({ className, density = 90 }: EmberFieldProps) {
     const dpr = mobile ? 1 : Math.min(window.devicePixelRatio || 1, 2)
     const densityMul = mobile ? (tier === 'low' ? 0.4 : 0.55) : 1
     const target = mobile ? Math.round(density * densityMul) : density
+
+    // P1.1 — build ring sprite cache for this DPR (shared across remounts).
+    const rings = getRingCache(dpr)
 
     let width = 0
     let height = 0
@@ -142,17 +184,23 @@ export function EmberField({ className, density = 90 }: EmberFieldProps) {
 
         const k = e.life / e.max
         if (e.ring) {
-          // Soft warm circle of flame
+          // P1.1 — blit pre-rendered gradient sprite instead of
+          // creating a new radial gradient every frame.
           const r = e.size + k * 2.4
-          const a = (1 - k) * 1
-          const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, r * 4)
-          grad.addColorStop(0, `hsla(${e.hue}, 100%, ${72 - k * 24}%, ${a})`)
-          grad.addColorStop(0.4, `hsla(${e.hue - 8}, 100%, ${52 - k * 18}%, ${a * 0.55})`)
-          grad.addColorStop(1, 'rgba(0,0,0,0)')
-          ctx.fillStyle = grad
-          ctx.beginPath()
-          ctx.arc(e.x, e.y, r * 3.6, 0, Math.PI * 2)
-          ctx.fill()
+          const drawR = r * 3.6
+          const a = 1 - k
+          const bin = Math.min(
+            RING_CACHE_SIZE - 1,
+            Math.max(0, Math.floor(((e.hue - 18) / 26) * RING_CACHE_SIZE)),
+          )
+          const sprite = rings[bin]
+          if (sprite) {
+            ctx.globalAlpha = a
+            // sprite is in device px (2*r*dpr square); ctx is in CSS units
+            // thanks to setTransform above, so target is 2*drawR CSS px.
+            ctx.drawImage(sprite, e.x - drawR, e.y - drawR, drawR * 2, drawR * 2)
+            ctx.globalAlpha = 1
+          }
         } else {
           // bright spark
           ctx.fillStyle = `rgba(255, ${220 - k * 90}, ${130 - k * 90}, ${(1 - k) * 0.95})`

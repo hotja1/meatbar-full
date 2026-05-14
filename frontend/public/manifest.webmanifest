@@ -60,7 +60,7 @@
     {
       "name": "Открыть меню",
       "short_name": "Меню",
-      "url": "/#menu",
+      "url": "/menu",
       "description": "Перейти к меню Мясо Бар",
       "icons": [{ "src": "/assets/meatbar-logo-mark-square-large-192.webp", "sizes": "192x192" }]
     },

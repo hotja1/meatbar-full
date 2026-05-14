@@ -1,6 +1,7 @@
 import { useEffect, type MouseEvent as ReactMouseEvent } from 'react'
 import CalendarDays from 'lucide-react/dist/esm/icons/calendar-days.js'
 import Clock from 'lucide-react/dist/esm/icons/clock.js'
+import Coffee from 'lucide-react/dist/esm/icons/coffee.js'
 import Flame from 'lucide-react/dist/esm/icons/flame.js'
 import Instagram from 'lucide-react/dist/esm/icons/instagram.js'
 import MapPin from 'lucide-react/dist/esm/icons/map-pin.js'
@@ -24,10 +25,11 @@ type SideNavProps = {
 const navItems = [
   { href: '#our-room', label: 'Зал', icon: Star, hint: 'тёплый свет, кирпич, дерево' },
   { href: '#journey', label: 'История', icon: Flame, hint: 'дым, север и наш характер' },
-  { href: '#menu', label: 'Меню', icon: Menu, hint: 'рёбра · брискет · ягоды Югры' },
-  { href: '#bar', label: 'Бар', icon: Flame, hint: 'коктейли · вино · крепкое' },
+  { href: '/menu', label: 'Меню', icon: Menu, hint: 'рёбра · брискет · ягоды Югры' },
+  { href: '/bar', label: 'Бар', icon: Flame, hint: 'коктейли · вино · крепкое' },
   { href: '#order', label: 'Заказ', icon: ShoppingBag, hint: 'самовывоз и доставка' },
-  { href: '#booking', label: 'Бронь столика', icon: CalendarDays, hint: 'живая схема зала' },
+  { href: '/booking', label: 'Бронь столика', icon: CalendarDays, hint: 'живая схема зала' },
+  { href: '/business-lunch', label: 'Бизнес-ланч', icon: Coffee, hint: 'каждый день 12:00–15:00' },
   { href: '#jobs', label: 'Работа в команде', icon: Users, hint: 'кухня и зал' },
   { href: '#contacts', label: 'Контакты', icon: MapPin, hint: 'ТРЦ ЮграМолл, 3 этаж' },
 ]

@@ -522,3 +522,17 @@
 - [x] Booking map precision update: table hit/outline geometry moved to per-table tabletop bounds, plus Hall 2 correction pass for round/right-wall line alignment.
 - [x] Booking map perf-safe refinement: table overlays now use static SVG polygons/ellipses only, with thinner non-scaling strokes and reduced highlight glow; budget guard remains OK after the visual correction.
 - [x] Final verification after old button-zone removal and tighter tabletop outlines: `guard:mojibake` -> `lint` (3 known admin warnings) -> `build` -> `perf:budgets`; budget gate OK (`largest js.gz = 101.32 KB`, `largest css.gz = 13.71 KB`).
+- [x] Manual table-outline correction pass completed for all 3 booking halls: per-table polygons/ellipses were retuned to the visible tabletop perimeter while preserving existing status colors (`free/reserved/held`) and click/hover behavior. Verification passed: `guard:mojibake` -> `lint` -> `build` -> `perf:budgets` (`largest js.gz = 101.37 KB`, `largest css.gz = 13.71 KB`).
+
+## UPDATE 2026-05-12
+
+- [x] Backend: ETag (weak md5) для `/api/menu`, `/api/tables`, `/api/content` + `If-None-Match` → 304 (planopt E24).
+- [x] Backend: Brotli для JSON API через встроенный `node:zlib.brotliCompressSync` (без новых npm-зависимостей), LRU-кэш сжатых payload'ов (planopt E23).
+- [x] Backend: rate-limit для `/api/rum` (120 req/IP/10min, planopt E28).
+- [x] Frontend: `navigator.connection.change` + `prefers-reduced-motion` listeners → `data-perf` пересчёт на лету (planopt G36).
+- [x] Frontend: HeroReel stillFrame branch для `perf='low' + save-data` — `<video>` вовсе не монтируется, рендерится AVIF/WebP постер (planopt A6).
+- [x] Frontend: SEO / analytics-bootstrap / RUM вынесены в idle-chunks через `scheduleIdle(() => import(...))` — из initial bundle ушли ~4 KB gzip (planopt B8).
+- [x] Frontend: soft update-toast вместо моментального `window.location.reload()` (planopt H42).
+- [x] Frontend: `SharedHeader` → `React.memo`, `MenuPage` callbacks стабилизированы через `useCallback`, DishCard вынесен в мемоизируемый компонент (planopt F35).
+- [x] CSS cleanup: удалены мёртвые селекторы старых версий booking/cart/contacts (38 классов: mobile-menu, cart-panel/cart-line, booking-form/error/success, contacts-section/contact-cards, table-point/table-card, zone-*, .pill и др.). CSS.gz: 14.09 KB → 13.22 KB (planopt C13).
+- Метрики: `index.js.gz` 101.89 → 100.77 KB, `index.css.gz` 14.09 → 13.22 KB. `perf:budgets` зелёный.

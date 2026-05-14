@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { createHash } from 'node:crypto'
 import { performance } from 'node:perf_hooks'
 import { db } from '../db.js'
 import { sendSmsCode, verifySmsCode } from '../integrations/sms.js'
@@ -8,7 +9,8 @@ import {
 } from '../integrations/telegram.js'
 import { notifyStaff } from '../integrations/notifier.js'
 import { createYooKassaPayment } from '../integrations/yookassa.js'
-import { bookingLimiter, orderLimiter, smsLimiter } from '../security.js'
+import { bookingLimiter, orderLimiter, rumLimiter, smsLimiter } from '../security.js'
+import { clearBrotliCache, sendJsonWithBrotli } from '../brotli-json.js'
 
 const API_CACHE_TTL_MS = 60 * 1000
 const API_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=600'
@@ -17,18 +19,47 @@ const apiCache = new Map()
 export function clearPublicApiCache(...keys) {
   if (!keys.length) {
     apiCache.clear()
+    clearBrotliCache()
     return
   }
   for (const key of keys) apiCache.delete(key)
+  clearBrotliCache(...keys)
 }
 
 function getCachedPayload(cacheKey, producer) {
   const now = Date.now()
   const cached = apiCache.get(cacheKey)
-  if (cached && cached.expiresAt > now) return { payload: cached.payload, cacheHit: true }
+  if (cached && cached.expiresAt > now) {
+    return { payload: cached.payload, etag: cached.etag, cacheHit: true }
+  }
   const payload = producer()
-  apiCache.set(cacheKey, { payload, expiresAt: now + API_CACHE_TTL_MS })
-  return { payload, cacheHit: false }
+  const etag = weakEtagFor(payload)
+  apiCache.set(cacheKey, { payload, etag, expiresAt: now + API_CACHE_TTL_MS })
+  return { payload, etag, cacheHit: false }
+}
+
+/* Task E24 — weak ETag по содержимому JSON-ответа.
+   Хэш md5(JSON) → `W/"<12 hex>"`. Weak-вариант безопасен для JSON,
+   где пробелы/порядок ключей могут отличаться между сериализациями
+   на разных рантаймах. Клиент шлёт If-None-Match → мы отвечаем 304
+   с тем же Cache-Control, чтобы SW/браузер продлили свежесть без
+   перекачки body. */
+function weakEtagFor(payload) {
+  const body = JSON.stringify(payload)
+  const hex = createHash('md5').update(body).digest('hex').slice(0, 12)
+  return `W/"${hex}"`
+}
+
+function sendCachedJson(req, res, startedAt, cacheHit, etag, payload, cacheKey) {
+  setServerTiming(res, startedAt, cacheHit)
+  res.setHeader('Cache-Control', API_CACHE_CONTROL)
+  res.setHeader('ETag', etag)
+  const inm = req.headers['if-none-match']
+  if (inm && inm === etag) {
+    res.status(304).end()
+    return
+  }
+  sendJsonWithBrotli(req, res, payload, etag, cacheKey)
 }
 
 function setServerTiming(res, startedAt, cacheHit) {
@@ -40,15 +71,15 @@ function setServerTiming(res, startedAt, cacheHit) {
 export function publicRoutes(io) {
   const router = Router()
 
-  router.get('/menu', (_req, res) => {
+  router.get('/menu', (req, res) => {
     const startedAt = performance.now()
-    const { payload, cacheHit } = getCachedPayload('menu', () => {
+    const { payload, etag, cacheHit } = getCachedPayload('menu', () => {
       const cats = db
         .prepare('SELECT id, name, position FROM menu_categories ORDER BY position, id')
         .all()
       const itemsByCat = db
         .prepare(
-          'SELECT id, category_id, title, weight, price, description, image, available, featured, position FROM menu_items WHERE available = 1 ORDER BY position, id',
+          'SELECT id, category_id, title, weight, price, description, image, available, featured, spicy, position FROM menu_items WHERE available = 1 ORDER BY position, id',
         )
         .all()
       return cats.map((cat) => ({
@@ -66,31 +97,28 @@ export function publicRoutes(io) {
             image: item.image ?? undefined,
             available: Boolean(item.available),
             featured: Boolean(item.featured),
+            spicy: Boolean(item.spicy),
           })),
       }))
     })
-    setServerTiming(res, startedAt, cacheHit)
-    res.setHeader('Cache-Control', API_CACHE_CONTROL)
-    res.json(payload)
+    sendCachedJson(req, res, startedAt, cacheHit, etag, payload, 'menu')
   })
 
-  router.get('/tables', (_req, res) => {
+  router.get('/tables', (req, res) => {
     const startedAt = performance.now()
-    const { payload, cacheHit } = getCachedPayload('tables', () =>
+    const { payload, etag, cacheHit } = getCachedPayload('tables', () =>
       db
         .prepare(
           'SELECT id, title, zone, seats, status, x, y, scene, notes, hall, number, width, height, shape FROM tables ORDER BY id',
         )
         .all(),
     )
-    setServerTiming(res, startedAt, cacheHit)
-    res.setHeader('Cache-Control', API_CACHE_CONTROL)
-    res.json(payload)
+    sendCachedJson(req, res, startedAt, cacheHit, etag, payload, 'tables')
   })
 
-  router.get('/content', (_req, res) => {
+  router.get('/content', (req, res) => {
     const startedAt = performance.now()
-    const { payload, cacheHit } = getCachedPayload('content', () => {
+    const { payload, etag, cacheHit } = getCachedPayload('content', () => {
       const row = db.prepare('SELECT data FROM site_content WHERE id = 1').get()
       if (!row) return {}
       try {
@@ -99,13 +127,11 @@ export function publicRoutes(io) {
         return {}
       }
     })
-    setServerTiming(res, startedAt, cacheHit)
-    res.setHeader('Cache-Control', API_CACHE_CONTROL)
-    res.json(payload)
+    sendCachedJson(req, res, startedAt, cacheHit, etag, payload, 'content')
   })
 
   router.post('/bookings', bookingLimiter, async (req, res) => {
-    const { name, phone, date, time, guests, table, tableId, comment } = req.body || {}
+    const { name, phone, date, time, guests, table, tableId, comment, preOrder, paymentMethod } = req.body || {}
     if (!name || !phone || !date || !time || !guests || !table) {
       return res.status(400).json({ error: 'Все обязательные поля должны быть заполнены' })
     }
@@ -116,12 +142,16 @@ export function publicRoutes(io) {
       if (tableRow.status === 'reserved') return res.status(409).json({ error: 'Стол уже забронирован' })
     }
 
+    const preOrderJson = Array.isArray(preOrder) && preOrder.length > 0 ? JSON.stringify(preOrder) : null
+    const payment = paymentMethod === 'online' ? 'online' : 'none'
+    const paymentStatus = payment === 'online' ? 'pending' : 'none'
+
     const result = db
       .prepare(
-        `INSERT INTO bookings (table_id, table_title, guests, date, time, name, phone, comment, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        `INSERT INTO bookings (table_id, table_title, guests, date, time, name, phone, comment, pre_order, payment_method, payment_status, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       )
-      .run(tableId ?? null, table, Number(guests), date, time, name, phone, comment ?? null)
+      .run(tableId ?? null, table, Number(guests), date, time, name, phone, comment ?? null, preOrderJson, payment, paymentStatus)
     const booking = db
       .prepare('SELECT * FROM bookings WHERE id = ?')
       .get(Number(result.lastInsertRowid))
@@ -242,7 +272,7 @@ export function publicRoutes(io) {
     console.warn('[rum] failed to ensure table:', err?.message)
   }
 
-  router.post('/rum', (req, res) => {
+  router.post('/rum', rumLimiter, (req, res) => {
     const events = Array.isArray(req.body?.events) ? req.body.events : []
     if (!events.length) {
       return res.status(204).end()
